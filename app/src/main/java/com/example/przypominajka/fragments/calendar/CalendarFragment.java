@@ -173,7 +173,7 @@ public class CalendarFragment extends Fragment {
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                showEventList(LocalDate.now());
+                showEventList(currentDateInPreview);
             }
         });
 
@@ -185,7 +185,7 @@ public class CalendarFragment extends Fragment {
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                showEventList(LocalDate.now());
+                showEventList(currentDateInPreview);
             }
         });
 

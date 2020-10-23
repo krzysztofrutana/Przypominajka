@@ -93,6 +93,7 @@ public class AddNewEventActivity extends AppCompatActivity {
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         mDefaultColor = 0xE0E0E0;
+        eventColor = mDefaultColor;
         oneTimeDate = "";
         // initialize necessary elements
         przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(this);
@@ -302,7 +303,7 @@ public class AddNewEventActivity extends AppCompatActivity {
 
     // show color picker dialog to choose color of event
     public void buttonChooseColor_onClick(final View view) {
-        AmbilWarnaDialog colorPicker = new AmbilWarnaDialog(this, mDefaultColor, new AmbilWarnaDialog.OnAmbilWarnaListener() {
+        AmbilWarnaDialog colorPicker = new AmbilWarnaDialog(this, eventColor, new AmbilWarnaDialog.OnAmbilWarnaListener() {
             @Override
             public void onCancel(AmbilWarnaDialog dialog) {
             }
@@ -313,7 +314,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                 eventColor = color;
                 Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius);
                 Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
-                DrawableCompat.setTint(wrappedDrawable, mDefaultColor);
+                DrawableCompat.setTint(wrappedDrawable, eventColor);
                 view.setBackground(wrappedDrawable);
                 Button button = findViewById(R.id.buttonChooseColor);
                 button.setText("");

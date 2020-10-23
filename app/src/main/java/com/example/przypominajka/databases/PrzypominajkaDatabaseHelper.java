@@ -134,10 +134,11 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     public boolean fillTableDayOfMonth(String tableName, int dayOfMonth, LocalDate startDate, int monthNumberOfRepeats) {
         SQLiteDatabase db = this.getWritableDatabase();
         LocalDate newDate = startDate;
-        if (startDate == LocalDate.now()) {
-            long startDateAsMillis = startDate.toDateTimeAtStartOfDay().getMillis();
+        LocalDate tempDate = new LocalDate(startDate.getYear(), startDate.getMonthOfYear(), dayOfMonth);
+        if (startDate.toDateTimeAtStartOfDay().getMillis() < tempDate.toDateTimeAtStartOfDay().getMillis()) {
+            long tempDateAsMillis = tempDate.toDateTimeAtStartOfDay().getMillis();
             ContentValues contentValuesCurrentDate = new ContentValues();
-            contentValuesCurrentDate.put("DAY", startDateAsMillis);
+            contentValuesCurrentDate.put("DAY", tempDateAsMillis);
             long resultCurrentDate = db.insert("\"" + tableName + "\"", null, contentValuesCurrentDate);
             if (resultCurrentDate == -1) {
                 return false;
@@ -270,7 +271,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
             }
             eventName.close();
             long currentDateAsMillis = currentDate.toDateTimeAtStartOfDay().getMillis();
-            String query = "SELECT DAY FROM " + "\"" + tableName + "\"" + " WHERE DAY = " + "\"" + currentDateAsMillis + "\"";
+            String query = "SELECT DAY FROM " + "\"" + tableName + "\"" + " WHERE DAY = " + "'" + currentDateAsMillis + "'";
             @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
             boolean isInTable = cursor.getCount() != 0;
             cursor.close();
@@ -334,23 +335,14 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
                     Event tempEvent = allEvents.get(i);
                     // first check if its one time event
-                    Log.d("One time event", String.valueOf(tempEvent.getItsOneTimeEvent()));
-                    if (tempEvent.getItsOneTimeEvent()) {
-                        if (tempEvent.getOneTimeEventDate() == currentDay) {
-                            eventsForCurrentDay.add(tempEvent);
-                        }
-                    } else {
-                        // check if event is today
-                        boolean isEventToday = checkTableForCurrentDate(currentDay,
-                                tempEvent.getEventName());
-                        if (isEventToday) {
-                            // if yes add to array
-                            eventsForCurrentDay.add(tempEvent);
-                        }
+                    // check if event is today
+                    boolean isEventToday = checkTableForCurrentDate(currentDay,
+                            tempEvent.getEventName());
+                    if (isEventToday) {
+                        // if yes add to array
+                        eventsForCurrentDay.add(tempEvent);
                     }
-
                 }
-
 
             }
             return eventsForCurrentDay;

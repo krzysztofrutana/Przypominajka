@@ -136,7 +136,15 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (monthInterval) {
             String eventTypeMonthIntervalPart1 = "Przypominaj " + timeIntervalOfRepeat;
             String eventTypeMonthIntervalPart2 = " dnia miesiąca";
-            String eventTypeMonthIntervalPart3 = "Przez " + monthNumberOfRepeats + " miesięcy";
+            String eventTypeMonthIntervalPart3;
+            if (monthNumberOfRepeats == 1) {
+                eventTypeMonthIntervalPart3 = "jeden raz";
+            } else if (monthNumberOfRepeats >= 2 && monthNumberOfRepeats <= 4) {
+                eventTypeMonthIntervalPart3 = "przez " + monthNumberOfRepeats + " miesiące";
+            } else {
+                eventTypeMonthIntervalPart3 = "przez " + monthNumberOfRepeats + " miesięcy";
+            }
+
             eventTypeViewPart1.setText(eventTypeMonthIntervalPart1);
             eventTypeViewPart2.setText(eventTypeMonthIntervalPart2);
             eventTypeViewPart3.setText(eventTypeMonthIntervalPart3);
