@@ -160,7 +160,7 @@ Any contributions are welcome, you make are **greatly appreciated**.
 
 Krzysztof Rutana - krzysztofrutana@wp.pl
 
-Project Link: [https://github.com/krzysztofrutana/OCR-Desktop](https://github.com/krzysztofrutana/OCR-Desktop)
+Project Link: [https://github.com/krzysztofrutana/Przypominajka](https://github.com/krzysztofrutana/Przypominajka)
 
 
 <!-- ACKNOWLEDGEMENTS -->
