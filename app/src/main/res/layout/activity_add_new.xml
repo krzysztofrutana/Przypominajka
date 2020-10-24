@@ -58,10 +58,11 @@
                             android:layout_weight="1"
                             android:ems="10"
                             android:gravity="end"
-                            android:hint="wpisz nazwę"
+                            android:hint="@string/write_event_name_hint"
                             android:inputType="textMultiLine|textCapSentences"
                             android:singleLine="false"
-                            app:layout_constraintEnd_toEndOf="parent" />
+                            app:layout_constraintEnd_toEndOf="parent"
+                            android:autofillHints="" />
 
                         <TextView
                             android:id="@+id/text_hint"
@@ -71,7 +72,8 @@
                             android:layout_weight="1"
                             android:textSize="12sp"
                             android:paddingEnd="15dp"
-                            android:paddingRight="15dp" />
+                            android:paddingRight="15dp"
+                            tools:ignore="RtlSymmetry" />
 
                     </LinearLayout>
 
@@ -102,10 +104,12 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:ems="10"
-                        android:hint="wpisz opis"
+                        android:hint="@string/write_discription"
                         app:layout_constraintEnd_toEndOf="parent"
                         android:inputType="textMultiLine|textCapSentences"
-                        android:gravity="end" />
+                        android:gravity="end"
+                        tools:ignore="MissingConstraints"
+                        android:autofillHints="" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
 
@@ -119,7 +123,7 @@
                     android:id="@+id/textViewColor"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Kolor wydarzenia:"
+                    android:text="@string/event_color"
                     android:textSize="18sp"
                     android:layout_gravity="center_vertical|center_horizontal" />
 
@@ -140,7 +144,8 @@
                         android:text="@string/choose_color"
                         android:topLeftRadius="50dp"
                         android:topRightRadius="50dp"
-                        app:layout_constraintEnd_toEndOf="parent" />
+                        app:layout_constraintEnd_toEndOf="parent"
+                        tools:ignore="MissingConstraints" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
@@ -155,7 +160,7 @@
                     android:id="@+id/textRodzaj"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Rodzaj wydarzenia:"
+                    android:text="@string/event_type"
                     android:textSize="18sp"
                     android:layout_gravity="center_horizontal|center_vertical" />
 
@@ -171,15 +176,16 @@
                     android:id="@+id/radioButtonCurrentDay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="w konkretne dni miesiąca"
-                    android:textSize="16dp" />
+                    android:text="@string/in_current_day_of_month"
+                    android:textSize="16sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="#EEEEEE"
-                    android:id="@+id/linearLayoutCMonthInterval">
+                    android:id="@+id/linearLayoutMonthSection"
+                    android:visibility="visible">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -190,31 +196,46 @@
                             android:id="@+id/textViewWhichDay"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Dzień miesiąca: "
+                            android:text="@string/day_of_month"
                             android:textSize="18sp"
-                            android:layout_gravity="center_vertical|center_horizontal"
-                            android:paddingLeft="30dp" />
+                            android:paddingLeft="30dp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal" />
 
                         <androidx.constraintlayout.widget.ConstraintLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:paddingEnd="10dp"
-                            android:paddingRight="10dp">
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
 
                             <EditText
-                                android:id="@+id/editWhichDay"
+                                android:id="@+id/editMonthSectionWhichDay"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:ems="8"
                                 android:gravity="end"
-                                android:hint="dzień miesiąca"
+                                android:hint="@string/day_of_month_hint"
                                 android:inputType="number"
-                                app:layout_constraintEnd_toEndOf="parent" />
+                                app:layout_constraintEnd_toEndOf="parent"
+                                tools:ignore="MissingConstraints"
+                                android:autofillHints=""
+                                android:visibility="visible" />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#808080"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -225,29 +246,115 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Liczba powtórzeń: "
+                            android:text="@string/how_many_repeats"
                             android:textSize="18sp"
                             android:layout_gravity="center_vertical|center_horizontal"
-                            android:paddingLeft="30dp" />
+                            android:paddingLeft="30dp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry" />
 
                         <androidx.constraintlayout.widget.ConstraintLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:paddingEnd="10dp"
-                            android:paddingRight="10dp">
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
 
                             <EditText
-                                android:id="@+id/editNumberOfMonth"
+                                android:id="@+id/editMonthSectionNumerOfRepeats"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:ems="8"
+
                                 android:gravity="end"
-                                android:hint="liczba miesięcy"
+                                android:hint="@string/number_of_months"
                                 android:inputType="number"
-                                app:layout_constraintEnd_toEndOf="parent" />
+                                app:layout_constraintEnd_toEndOf="parent"
+                                tools:ignore="MissingConstraints"
+                                android:autofillHints="" />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#808080"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="50dp"
+                        android:orientation="horizontal"
+                        android:paddingBottom="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:paddingLeft="30dp"
+                            android:text="@string/time_word"
+                            android:textSize="18sp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+                            <CheckBox
+                                android:id="@+id/checkboxMonthSectionlDefaultTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginEnd="3dp"
+                                android:layout_marginRight="3dp"
+                                android:checked="true"
+                                android:text="@string/time_default"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingEnd="10dp"
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+
+                            <TextView
+                                android:id="@+id/textMonthSectionTimeOfEvent"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="3dp"
+                                android:layout_marginLeft="3dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_marginRight="5dp"
+                                android:layout_weight="1"
+                                android:gravity="end"
+                                android:paddingStart="15dp"
+                                android:paddingLeft="15dp"
+                                android:text="@string/set_time_text"
+                                android:textSize="16sp"
+                                android:visibility="gone"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintHorizontal_bias="0.89"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
                     </LinearLayout>
                 </LinearLayout>
 
@@ -255,16 +362,17 @@
                     android:id="@+id/radioButtonJumpDay"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="cykliczne, w odstępach czasu"
-                    android:textSize="16dp" />
+                    android:text="@string/cyclically_at_time_intervals"
+                    android:textSize="16sp" />
 
 
                 <LinearLayout
+                    android:id="@+id/linearLayoutCustomTimeSection"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
                     android:background="#EEEEEE"
-                    android:id="@+id/linearLayoutShortInterval">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -277,100 +385,223 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_vertical|center_horizontal"
                             android:paddingLeft="30dp"
-                            android:text="Przypominaj co: "
-                            android:textSize="18sp" />
+                            android:text="@string/remind_what"
+                            android:textSize="18sp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry" />
 
                         <androidx.constraintlayout.widget.ConstraintLayout
-                            android:layout_width="82dp"
+                            android:layout_width="80dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_horizontal|center_vertical"
-                            android:paddingLeft="10dp">
+                            android:paddingLeft="10dp"
+                            android:paddingStart="10dp"
+                            tools:ignore="RtlSymmetry">
 
                             <EditText
-                                android:id="@+id/editTextShortTimeInterval"
-                                android:layout_width="70dp"
-                                android:layout_height="44dp"
+                                android:id="@+id/editTextCustomTimeInterval"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:ems="8"
-                                android:hint="ile"
+                                android:hint="@string/how_many"
                                 android:inputType="number"
                                 app:layout_constraintStart_toStartOf="parent"
-                                tools:layout_editor_absoluteY="1dp" />
+                                android:paddingStart="10dp"
+                                android:paddingLeft="10dp"
+                                tools:ignore="MissingConstraints,RtlSymmetry"
+                                android:autofillHints="" />
 
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
-                        <LinearLayout
+                        <androidx.constraintlayout.widget.ConstraintLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:paddingLeft="5dp">
+                            android:layout_height="wrap_content">
 
-                            <CheckBox
-                                android:id="@+id/checkBoxDay"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="dni"
-                                tools:layout_editor_absoluteX="171dp" />
+                                android:orientation="vertical"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                tools:layout_editor_absoluteY="0dp"
+                                android:paddingEnd="19dp"
+                                android:paddingRight="19dp"
+                                tools:ignore="MissingConstraints,RtlSymmetry">
 
-                            <CheckBox
-                                android:id="@+id/checkBoxWeek"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="tygodnie"
-                                tools:layout_editor_absoluteX="171dp" />
+                                <CheckBox
+                                    android:id="@+id/checkBoxCustomTimeDay"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/day" />
 
-                            <CheckBox
-                                android:id="@+id/checkBoxMonth"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="miesiące"
-                                tools:layout_editor_absoluteX="171dp" />
+                                <CheckBox
+                                    android:id="@+id/checkBoxCustomTimeWeek"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/week" />
 
-                        </LinearLayout>
+                                <CheckBox
+                                    android:id="@+id/checkBoxCustomTimeMonth"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/month" />
+
+                            </LinearLayout>
+
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#808080"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:minHeight="50dp"
                         android:orientation="horizontal"
-                        android:id="@+id/linearLayoutJumpDayHowLong"
                         android:paddingBottom="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Ile powtórzeń: "
-                            android:textSize="18sp"
                             android:layout_gravity="center_vertical|center_horizontal"
-                            android:paddingLeft="30dp" />
+                            android:paddingLeft="30dp"
+                            android:text="@string/how_many_repeats"
+                            android:textSize="18sp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry" />
 
-                        <CheckBox
-                            android:layout_width="wrap_content"
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="0dp"
                             android:layout_height="match_parent"
-                            android:text="Zawsze"
-                            android:checked="true"
-                            android:id="@+id/checkboxJumpDayAllways" />
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:layout_weight="1">
+
+                            <CheckBox
+                                android:id="@+id/checkboxCustomTimeRepeatsAllways"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginEnd="12dp"
+                                android:layout_marginRight="12dp"
+                                android:layout_weight="1"
+                                android:checked="true"
+                                android:paddingStart="5dp"
+                                android:paddingLeft="5dp"
+                                android:singleLine="true"
+                                android:text="@string/repeats_allways"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                tools:ignore="RtlSymmetry" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
                         <androidx.constraintlayout.widget.ConstraintLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:paddingEnd="10dp"
-                            android:paddingRight="10dp">
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
 
 
                             <EditText
-                                android:id="@+id/editJumpDayHowLongCount"
+                                android:id="@+id/editCustomTimeNumberOfRepeats"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:layout_marginLeft="8dp"
-                                android:layout_weight="1"
-                                android:hint="wpisz liczbę"
+                                android:hint="@string/write_number"
                                 android:inputType="number"
                                 android:visibility="gone"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                tools:ignore="MissingConstraints"
+                                android:textSize="18sp"
+                                android:importantForAutofill="no" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#808080"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="50dp"
+                        android:orientation="horizontal"
+                        android:paddingBottom="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:paddingLeft="30dp"
+                            android:text="@string/time_word"
+                            android:textSize="18sp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+                            <CheckBox
+                                android:id="@+id/checkboxCustomTimeDefaultTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginEnd="3dp"
+                                android:layout_marginRight="3dp"
+                                android:checked="true"
+                                android:text="@string/time_default"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingEnd="10dp"
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+
+                            <TextView
+                                android:id="@+id/textCustomTimeEventTime"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="3dp"
+                                android:layout_marginLeft="3dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_marginRight="5dp"
+                                android:layout_weight="1"
+                                android:gravity="end"
+                                android:paddingStart="15dp"
+                                android:paddingLeft="15dp"
+                                android:text="@string/set_time_text"
+                                android:textSize="16sp"
+                                android:visibility="gone"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintHorizontal_bias="0.89"
                                 app:layout_constraintStart_toStartOf="parent"
-                                tools:layout_editor_absoluteY="0dp" />
+                                app:layout_constraintTop_toTopOf="parent" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -381,43 +612,140 @@
                     android:id="@+id/radioButtonOneTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="jednorazowo"
-                    android:textSize="16dp" />
+                    android:text="@string/one_time"
+                    android:textSize="16sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="10dp"
-                    android:id="@+id/linearLayoutOneTimeEvent"
-                    android:background="#EEEEEE"
-                    android:padding="10dp">
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:id="@+id/linearLayoutOneTimeSection"
+                    android:visibility="gone"
+                    android:background="#EEEEEE">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Data wydarzenia: "
-                        android:paddingLeft="30dp"
-                        android:textSize="18dp" />
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:paddingEnd="10dp"
-                        android:paddingRight="10dp">
+                        android:orientation="horizontal"
+                        android:layout_marginTop="10dp"
+                        android:paddingBottom="10dp">
 
                         <TextView
-                            android:id="@+id/textViewOneTimeSetDate"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:hint="kliknij by wybrać"
+                            android:text="@string/date_of_event"
                             android:textSize="18sp"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            android:gravity="end" />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                            android:paddingStart="30dp"
+                            android:paddingLeft="30dp"
+                            tools:ignore="RtlSymmetry" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingEnd="10dp"
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+                            <TextView
+                                android:id="@+id/textViewOneTimeSectionSetDate"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="4dp"
+                                android:layout_marginRight="4dp"
+                                android:layout_weight="1"
+                                android:gravity="end"
+                                android:hint="@string/click_to_choose"
+                                android:textSize="18sp"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                tools:ignore="MissingConstraints" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#808080"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="50dp"
+                        android:orientation="horizontal"
+                        android:paddingBottom="10dp"
+                        android:paddingTop="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:paddingLeft="30dp"
+                            android:text="@string/time_word"
+                            android:textSize="18sp"
+                            android:paddingStart="30dp"
+                            tools:ignore="RtlSymmetry" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+                            <CheckBox
+                                android:id="@+id/checkboxOneTimeDefaultTime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginEnd="3dp"
+                                android:layout_marginRight="3dp"
+                                android:checked="true"
+                                android:text="@string/time_default"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingEnd="10dp"
+                            android:paddingRight="10dp"
+                            tools:ignore="RtlSymmetry"
+                            android:layout_gravity="center_vertical|center_horizontal">
+
+
+                            <TextView
+                                android:id="@+id/editOneTimeTimeOfEvent"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="3dp"
+                                android:layout_marginLeft="3dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_marginRight="5dp"
+                                android:layout_weight="1"
+                                android:gravity="end"
+                                android:paddingStart="15dp"
+                                android:paddingLeft="15dp"
+                                android:text="@string/set_time_text"
+                                android:textSize="16sp"
+                                android:visibility="gone"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintHorizontal_bias="0.89"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                    </LinearLayout>
 
                 </LinearLayout>
+
 
             </RadioGroup>
 
@@ -428,10 +756,9 @@
                 android:layout_marginTop="15dp">
 
                 <TextView
-                    android:id="@+id/textViewFromWhen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Rozpocznij od: "
+                    android:text="@string/start_from"
                     android:textSize="18sp" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -439,14 +766,15 @@
                     android:layout_height="wrap_content">
 
                     <TextView
-                        android:id="@+id/textViewSetDate"
+                        android:id="@+id/textViewSetStartDate"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:hint="kliknij by wybrać"
+                        android:hint="@string/click_to_choose"
                         android:textSize="18sp"
                         app:layout_constraintEnd_toEndOf="parent"
-                        android:gravity="end" />
+                        android:gravity="end"
+                        tools:ignore="MissingConstraints" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </LinearLayout>
@@ -464,7 +792,7 @@
                     android:id="@+id/buttonSaveAndStartEvent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Zapisz wydarzenie"
+                    android:text="@string/save_event"
                     android:onClick="buttonSaveNewEvent"
                     android:background="@drawable/button_save_event" />
             </LinearLayout>

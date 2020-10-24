@@ -27,6 +27,31 @@
     <string name="made_by">by Krzysztof Rutana</string>
     <string name="email_address">krzysztofrutana@wp.pl</string>
     <string name="add_event">Dodawanie zdarzenia</string>
+    <string name="time_word">Godzina:</string>
+    <string name="time_default">Domyślna</string>
+    <string name="set_time_text">wybierz godzinę</string>
+    <string name="save_event">Zapisz wydarzenie</string>
+    <string name="click_to_choose">kliknij by wybrać</string>
+    <string name="start_from">Rozpocznij od:</string>
+    <string name="date_of_event">Data wydarzenia:</string>
+    <string name="one_time">jednorazowo</string>
+    <string name="repeats_allways">Zawsze</string>
+    <string name="write_number">wpisz liczbę</string>
+    <string name="how_many">ile</string>
+    <string name="day">dni</string>
+    <string name="week">tygodnie</string>
+    <string name="month">miesiące</string>
+    <string name="how_many_repeats">Ile powtórzeń:</string>
+    <string name="remind_what">Przypominaj co:</string>
+    <string name="cyclically_at_time_intervals">cykliczne, w odstępach czasu</string>
+    <string name="number_of_months">liczba miesięcy</string>
+    <string name="day_of_month_hint">dzień miesiąca</string>
+    <string name="day_of_month">Dzień miesiąca:</string>
+    <string name="in_current_day_of_month">w konkretne dni miesiąca</string>
+    <string name="event_type">Rodzaj wydarzenia:</string>
+    <string name="write_discription">wpisz opis</string>
+    <string name="event_color">Kolor wydarzenia:</string>
+    <string name="write_event_name_hint">wpisz nazwę</string>
 
 
 </resources>
