@@ -9,15 +9,24 @@
         android:roundIcon="@mipmap/ic_przypominajka_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <service
+            android:name=".services.ChechDatabaseService"
+            android:enabled="true"
+            android:exported="false"></service>
+        <service
+            android:name=".services.SetAlarmService"
+            android:enabled="true"
+            android:exported="false" />
+
         <activity
             android:name=".activities.EventDetailsActivity"
-            android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/event_details"
-            android:parentActivityName=".activities.MainActivity" />
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.AddNewEventActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:label="@string/add_event" />
+            android:label="@string/add_event"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.MainActivity"
             android:label="@string/app_name"
@@ -28,6 +37,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".utils.ReminderBroadcast" />
     </application>
 
 </manifest>

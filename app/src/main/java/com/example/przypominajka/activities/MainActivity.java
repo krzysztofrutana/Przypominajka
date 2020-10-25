@@ -1,5 +1,8 @@
 package com.example.przypominajka.activities;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 ;
 
@@ -17,6 +20,7 @@ import android.view.MenuItem;
 import com.example.przypominajka.R;
 import com.example.przypominajka.fragments.calendar.CalendarFragment;
 import com.example.przypominajka.fragments.events.EventsFragment;
+import com.example.przypominajka.fragments.settings.SettingFragment;
 import com.google.android.material.navigation.NavigationView;
 
 
@@ -74,10 +78,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.nav_events:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new EventsFragment()).addToBackStack("events_list").commit();
                 break;
+            case R.id.nav_settings:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new SettingFragment()).addToBackStack("settings").commit();
+                break;
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "PrzypominajkaRemindChannel";
+            String discription = "Channel of Przypominajka";
+            int importence = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("notifyPrzypominajka", name, importence);
+            channel.setDescription(discription);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
 
 }

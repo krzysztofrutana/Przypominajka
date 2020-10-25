@@ -20,11 +20,10 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "przypominajka";
 
 
-    private static final String TABLE_NAME = "EVENTS"; // main table name
+    private static final String TABLE_EVENTS = "EVENTS"; // main table name
 
     private static final String EVENT_NAME = "EVENT_NAME"; // strings
     private static final String EVENT_DISCRIPTION = "EVENT_DISCRIPTION"; // strings
-
 
     private static final String EVENT_COLOR = "EVENT_COLOR";//int
 
@@ -35,15 +34,18 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     private static final String SHORT_TIME_TYPE = "SHORT_TIME_TYPE"; // type (0 - none, 1 - day,2 - week,3 - month)
     private static final String SHORT_TIME_REPEATS_ALL_TIME = "SHORT_TIME_REPEATS_ALL_TIME";// boolean
     private static final String SHORT_TIME_NUMBER_OF_REPEATS = "SHORT_TIME_NUMBER_OF_REPEATS"; // int
-
     private static final String ONE_TIME = "ONE_TIME"; // boolean
     private static final String ONE_TIME_DATE = "ONE_TIME_DATE"; // date
-
     private static final String TIME_INTERVAL = "TIME_INTERVAL"; // int
-
     private static final String START_DATE = "START_DATE"; // date
+    private static final String EVENT_TIME_DEFAULT = "EVENT_TIME_DEFAULT";
+    private static final String EVENT_TIME = "EVENT_TIME";
 
-    private static final int DB_VERSION = 3;
+    private static final String TABLE_SETTINGS = "SETTINGS";
+    private static final String DEFAULT_TIME = "DEFAULT_TIME";
+
+
+    private static final int DB_VERSION = 6;
 
     public PrzypominajkaDatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -51,7 +53,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String query = "CREATE TABLE " + TABLE_NAME + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        String queryEventTable = "CREATE TABLE " + TABLE_EVENTS + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + EVENT_NAME + " TEXT, "
                 + EVENT_DISCRIPTION + " TEXT, "
                 + EVENT_COLOR + " INTEGER, "
@@ -64,15 +66,22 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                 + ONE_TIME + " INTEGER DEFAULT 0, "
                 + ONE_TIME_DATE + " REAL DEFAULT 0, "
                 + TIME_INTERVAL + " INTEGER DEFAULT 0, "
+                + EVENT_TIME_DEFAULT + " INTEGER DEFAULT 0, "
+                + EVENT_TIME + " REAL DEFAULT 0, "
                 + START_DATE + " REAL DEFAULT 0);";
-        db.execSQL(query);
+        db.execSQL(queryEventTable);
+
+        String queryCreateSettingTable = "CREATE TABLE " + TABLE_SETTINGS + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + DEFAULT_TIME + " REAL DEFAULT 0);";
+        db.execSQL(queryCreateSettingTable);
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-        onCreate(db);
+        if (oldVersion < 6) {
+            onCreate(db);
+        }
     }
 
     public boolean insertEvent(Event event) {
@@ -93,7 +102,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
             contentValues.put(TIME_INTERVAL, event.getTimeInterval());
             contentValues.put(START_DATE, event.getStartDateInMillis());
             Log.d("Insert to table", String.valueOf(event.getOneTimeEventDateInMillis()));
-            long result = db.insert(TABLE_NAME, null, contentValues);
+            long result = db.insert(TABLE_EVENTS, null, contentValues);
             if (result == -1) {
                 return false;
             } else {
@@ -222,8 +231,8 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
         try {
             SQLiteDatabase db = this.getWritableDatabase();
             db.execSQL("DROP TABLE " + "\"" + eventName + "\"");
-            db.execSQL("DELETE FROM " + "\"" + TABLE_NAME + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"");
-            String queryEvent = "SELECT * FROM " + "\"" + TABLE_NAME + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"";
+            db.execSQL("DELETE FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"");
+            String queryEvent = "SELECT * FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"";
             String queryTable = "select DISTINCT tbl_name from sqlite_master where tbl_name = " + "\"" + eventName + "\"";
             Cursor cursorEvent = db.rawQuery(queryEvent, null);
             boolean isInTable = cursorEvent.getCount() == 0;
@@ -241,7 +250,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     public Cursor getEvent(String eventName) {
         try {
             SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT * FROM " + "\"" + TABLE_NAME + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"";
+            String query = "SELECT * FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"";
             return db.rawQuery(query, null);
         } catch (Exception e) {
             Log.w("SQLite", "Problem z zapytaniem do bazy danych " + e.getMessage());
@@ -288,7 +297,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     public List<Event> getAllEvent() {
         try {
             SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT * FROM " + "\"" + TABLE_NAME + "\"";
+            String query = "SELECT * FROM " + "\"" + TABLE_EVENTS + "\"";
             @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
             List<Event> eventsList = new ArrayList<>();
             if (cursor.getCount() == 0) {
@@ -351,5 +360,31 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
             return null;
         }
 
+    }
+
+    public void updateDefaultTimeInSettings(long defaultTime) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "UPDATE " + "\"" + TABLE_SETTINGS + "\"" +
+                "SET " + "\"" + DEFAULT_TIME + "\" = " + "\"" + defaultTime + "\";";
+        db.execSQL(query);
+    }
+
+    public long getDefaultTime() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + "\"" + DEFAULT_TIME + "\"" + " FROM " + "\"" + TABLE_SETTINGS + "\"";
+        long defaultTime = 0;
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
+        if (cursor.getCount() == 0) {
+            ContentValues content = new ContentValues();
+            content.put(DEFAULT_TIME, 0);
+            db.insert(TABLE_SETTINGS, null, content);
+            cursor.close();
+        } else {
+            cursor.moveToFirst();
+            defaultTime = cursor.getLong(1);
+            cursor.close();
+
+        }
+        return defaultTime;
     }
 }
