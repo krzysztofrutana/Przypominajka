@@ -2,7 +2,9 @@ package com.example.przypominajka.models;
 
 import android.util.Log;
 
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 
 public class Event {
 
@@ -13,21 +15,25 @@ public class Event {
     private boolean monthInterval;
     private int monthNumberOfRepeats;
 
-    private boolean shortTimeInterval;
-    private int shortTimeType; // type (0 - none, 1 - day,2 - week,3 - month)
-    private boolean shortTimeRepeatAllTime;
-    private int shortTimeNumberOfRepeats;
+    private boolean customTimeInterval;
+    private int customTimeType; // type (0 - none, 1 - day,2 - week,3 - month)
+    private boolean customTimeRepeatAllTime;
+    private int customTimeNumberOfRepeats;
 
     private boolean oneTimeEvent;
     private long oneTimeEventDate;
+
+    private boolean eventTimeDefault;
+    private long eventTime;
 
     private int timeIntervalOfRepeat;
     private long startDate;
 
 
     public Event(String eventName, String eventDiscription, int eventColor, boolean monthInterval, int monthNumberOfRepeats,
-                 boolean shortTimeInterval, int shortTimeType, boolean shortTimeRepeatAllTime, int shortTimeNumberOfRepeats,
-                 boolean oneTimeEvent, LocalDate oneTimeEventDate, int timeIntervalOfRepeat, LocalDate startDate) {
+                 boolean customTimeInterval, int customTimeType, boolean customTimeRepeatAllTime, int customTimeNumberOfRepeats,
+                 boolean oneTimeEvent, LocalDate oneTimeEventDate, boolean eventTimeDefault, long eventTime,
+                 int timeIntervalOfRepeat, LocalDate startDate) {
         this.eventName = eventName;
         // this is needed because SQLite not support space in name
         this.eventName = this.eventName.replaceAll(" ", "_");
@@ -35,10 +41,10 @@ public class Event {
         this.eventColor = eventColor;
         this.monthInterval = monthInterval;
         this.monthNumberOfRepeats = monthNumberOfRepeats;
-        this.shortTimeInterval = shortTimeInterval;
-        this.shortTimeType = shortTimeType;
-        this.shortTimeRepeatAllTime = shortTimeRepeatAllTime;
-        this.shortTimeNumberOfRepeats = shortTimeNumberOfRepeats;
+        this.customTimeInterval = customTimeInterval;
+        this.customTimeType = customTimeType;
+        this.customTimeRepeatAllTime = customTimeRepeatAllTime;
+        this.customTimeNumberOfRepeats = customTimeNumberOfRepeats;
         this.oneTimeEvent = oneTimeEvent;
         // convert LocalData to millisecond
         if (oneTimeEventDate != null) {
@@ -47,6 +53,8 @@ public class Event {
             this.oneTimeEventDate = 0;
         }
 
+        this.eventTimeDefault = eventTimeDefault;
+        this.eventTime = eventTime;
 
         this.timeIntervalOfRepeat = timeIntervalOfRepeat;
         // convert LocalData to millisecond
@@ -70,7 +78,7 @@ public class Event {
     public String getType() {
         if (monthInterval) {
             return "Month Interval";
-        } else if (shortTimeInterval) {
+        } else if (customTimeInterval) {
             return "Day Interval";
         } else if (oneTimeEvent) {
             return "One time event";
@@ -87,21 +95,23 @@ public class Event {
         return monthNumberOfRepeats;
     }
 
-    public boolean getItsShortTimeInterval() {
-        return shortTimeInterval;
+
+    public boolean getItCustomTimeInterval() {
+        return customTimeInterval;
     }
 
-    public int getShortTimeType() {
-        return shortTimeType;
+    public int getCustomTimeType() {
+        return customTimeType;
     }
 
-    public boolean getItsShortTimeRepeatsAllTime() {
-        return shortTimeRepeatAllTime;
+    public boolean getItsCustomTimeRepeatsAllTime() {
+        return customTimeRepeatAllTime;
     }
 
-    public int getShortTimeNumberOfRepeats() {
-        return shortTimeNumberOfRepeats;
+    public int getCustomTimeNumberOfRepeats() {
+        return customTimeNumberOfRepeats;
     }
+
 
     public boolean getItsOneTimeEvent() {
         return oneTimeEvent;
@@ -113,6 +123,18 @@ public class Event {
 
     public long getOneTimeEventDateInMillis() {
         return oneTimeEventDate;
+    }
+
+    public boolean getEventTimeDefault() {
+        return eventTimeDefault;
+    }
+
+    public LocalTime getEventTime() {
+        return new LocalTime(eventTime, DateTimeZone.forID("Etc/Universal"));
+    }
+
+    public long getEventTimeInMillis() {
+        return eventTime;
     }
 
     public int getTimeInterval() {

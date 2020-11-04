@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -22,7 +23,9 @@ import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
 import com.example.przypominajka.models.Event;
 
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 
 
@@ -46,8 +49,12 @@ public class EventDetailsActivity extends AppCompatActivity {
     private boolean oneTimeEvent;
     private long oneTimeEventDate;
 
+    private long eventTime;
+
     private int timeIntervalOfRepeat;
     private long startDate;
+
+    private long alarmSet;
 
     TextView eventNameView;
     TextView eventDiscriptionView;
@@ -55,7 +62,9 @@ public class EventDetailsActivity extends AppCompatActivity {
     TextView eventTypeViewPart1;
     TextView eventTypeViewPart2;
     TextView eventTypeViewPart3;
+    TextView eventTimeView;
     TextView startDateView;
+    TextView alarmSetView;
 
 
     @Override
@@ -81,6 +90,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         eventTypeViewPart1 = findViewById(R.id.textEventTypePart1);
         eventTypeViewPart2 = findViewById(R.id.textEventTypePart2);
         eventTypeViewPart3 = findViewById(R.id.textEventTypePart3);
+        eventTimeView = findViewById(R.id.textViewEventTime);
         startDateView = findViewById(R.id.textViewSetDate);
 
         // run methods
@@ -257,29 +267,35 @@ public class EventDetailsActivity extends AppCompatActivity {
             eventTypeViewPart1.setText("Jednorazowo");
             eventTypeViewPart2.setText(new LocalDate(oneTimeEventDate).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
         }
-        startDateView.setText(new LocalDate(startDate).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
+        eventTimeView.setText(new LocalTime(eventTime, DateTimeZone.forID("Etc/Universal")).toString(DateTimeFormat.forPattern("HH:mm")));
+        startDateView.setText(new LocalDate(startDate, DateTimeZone.forID("Etc/Universal")).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
+
 
     }
 
     // prepare information about event
     @SuppressLint({"ShowToast"})
     private void getInformationAboutEvent() {
-        Cursor cursor = przypominajkaDatabaseHelper.getEvent(eventName);
-        if (cursor.getCount() == 0) {
+        Event event = przypominajkaDatabaseHelper.getEvent(eventName);
+        if (event == null) {
             Toast.makeText(this, "Nie udało się uzyskać informacji o zdarzeniu", Toast.LENGTH_LONG);
         }
-        cursor.moveToFirst();
-        eventDiscription = cursor.getString(2);
-        eventColor = cursor.getInt(3);
-        monthInterval = cursor.getInt(4) == 1;
-        monthNumberOfRepeats = cursor.getInt(5);
-        shortTimeInterval = cursor.getInt(6) == 1;
-        shortTimeType = cursor.getInt(7);
-        shortTimeRepeatAllTime = cursor.getInt(8) == 1;
-        shortTimeNumberOfRepeats = cursor.getInt(9);
-        oneTimeEvent = cursor.getInt(10) == 1;
-        oneTimeEventDate = cursor.getLong(11);
-        timeIntervalOfRepeat = cursor.getInt(12);
-        startDate = cursor.getLong(13);
+        eventDiscription = event.getEventDiscription();
+        eventColor = event.getEventColor();
+        monthInterval = event.getItsMonthInterval();
+        monthNumberOfRepeats = event.getMonthNumberOfRepeats();
+        shortTimeInterval = event.getItCustomTimeInterval();
+        shortTimeType = event.getCustomTimeType();
+        shortTimeRepeatAllTime = event.getItsCustomTimeRepeatsAllTime();
+        shortTimeNumberOfRepeats = event.getCustomTimeNumberOfRepeats();
+        oneTimeEvent = event.getItsOneTimeEvent();
+        oneTimeEventDate = event.getOneTimeEventDateInMillis();
+        timeIntervalOfRepeat = event.getTimeInterval();
+        if (event.getEventTimeDefault()) {
+            eventTime = przypominajkaDatabaseHelper.getDefaultTime();
+        } else {
+            eventTime = event.getEventTimeInMillis();
+        }
+        startDate = event.getStartDateInMillis();
     }
 }
