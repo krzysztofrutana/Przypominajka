@@ -2,6 +2,10 @@ package com.example.przypominajka.activities;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 ;
@@ -13,15 +17,18 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import android.os.Handler;
 import android.view.MenuItem;
 
 
 import com.example.przypominajka.R;
+import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.fragments.calendar.CalendarFragment;
 import com.example.przypominajka.fragments.events.EventsFragment;
 import com.example.przypominajka.fragments.settings.SettingFragment;
+import com.example.przypominajka.services.SetAlarmService;
 import com.google.android.material.navigation.NavigationView;
+
+import android.app.job.JobInfo;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -29,6 +36,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
 
     NavigationView navigationView;
+
+    private int _id = 123;
+
+    private final PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +62,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         navigationView.setCheckedItem(R.id.nav_calendar);
 
+        // making job schediler to run job service in custom interval time
+        ComponentName componentName = new ComponentName(this, SetAlarmService.class);
+        JobInfo jobInfo = new JobInfo.Builder(_id, componentName)
+                .setPeriodic(przypominajkaDatabaseHelper.getCheckEventInterval())
+                .build();
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+
+        jobScheduler.schedule(jobInfo);
 
     }
 
@@ -60,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else if (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStack();
+            getFragmentManager().popBackStack("calendar", 0);
             navigationView.setCheckedItem(R.id.nav_calendar);
         } else {
             super.onBackPressed();
@@ -73,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.nav_calendar:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new CalendarFragment()).commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new CalendarFragment()).addToBackStack("calendar").commit();
                 break;
             case R.id.nav_events:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new EventsFragment()).addToBackStack("events_list").commit();
@@ -86,18 +106,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "PrzypominajkaRemindChannel";
-            String discription = "Channel of Przypominajka";
-            int importence = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel("notifyPrzypominajka", name, importence);
-            channel.setDescription(discription);
-
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
 
 }

@@ -3,20 +3,16 @@
     package="com.example.przypominajka">
 
     <application
-        android:allowBackup="true"
         android:icon="@mipmap/ic_przypominajka"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_przypominajka_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service
-            android:name=".services.ChechDatabaseService"
-            android:enabled="true"
-            android:exported="false"></service>
+
         <service
             android:name=".services.SetAlarmService"
-            android:enabled="true"
-            android:exported="false" />
+            android:label="Notify service"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity
             android:name=".activities.EventDetailsActivity"
