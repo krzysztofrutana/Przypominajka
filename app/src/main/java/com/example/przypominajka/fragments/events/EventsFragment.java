@@ -8,12 +8,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.example.przypominajka.activities.AddNewEventActivity;
 import com.example.przypominajka.models.Event;
@@ -97,6 +99,11 @@ public class EventsFragment extends Fragment {
     public void showAllEventList() {
 
         List<Event> events = przypominajkaDatabaseHelper.getAllEvent();
+        if (events == null) {
+            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
+            Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
+            return;
+        }
         eventArray.clear();
         if (events.size() > 0) {
 

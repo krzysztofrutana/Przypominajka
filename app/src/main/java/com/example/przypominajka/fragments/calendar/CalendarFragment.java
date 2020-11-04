@@ -26,6 +26,7 @@ import android.widget.ListView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.przypominajka.activities.AddNewEventActivity;
 import com.example.przypominajka.models.Event;
@@ -135,6 +136,7 @@ public class CalendarFragment extends Fragment {
         super.onAttach(context);
         context = cont;
         przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(context);
+
     }
 
     // only in this place possible is set correct everything views in fragment
@@ -257,11 +259,17 @@ public class CalendarFragment extends Fragment {
                         frameEvents.removeAllViews();
                         LocalDate tempDataTime = monthModel[x][i - 1];
                         List<Event> events = przypominajkaDatabaseHelper.getAllEvent();
+                        if (events == null) {
+                            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
+                            Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
+                            return;
+                        }
                         if (events.size() > 0) {
                             eventColorForCurrentDateArray.clear();
                             for (int j = 0; j < events.size(); j++) {
 
                                 Event tempEvent = events.get(j);
+
                                 boolean isEventToday = przypominajkaDatabaseHelper.checkTableForCurrentDate(tempDataTime,
                                         tempEvent.getEventName());
                                 if (isEventToday) {
@@ -324,6 +332,10 @@ public class CalendarFragment extends Fragment {
     public void showEventList(LocalDate localDate) {
         // get all event from database
         eventArray = przypominajkaDatabaseHelper.getEventForCurrentDay(localDate);
+        if (eventArray == null) {
+            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z baza danych", Toast.LENGTH_LONG).show();
+            Log.w("SQLite showEventList", "Wystąpił problem z pobraniem wydarzeń z baza danych");
+        }
 
         if (eventArray.size() > 0) {
             linearLayoutlinearLayoutIfTodayNothing.setVisibility(LinearLayout.GONE);
