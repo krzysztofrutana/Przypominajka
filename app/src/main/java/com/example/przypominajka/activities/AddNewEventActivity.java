@@ -7,17 +7,25 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -34,11 +42,16 @@ import android.widget.Toast;
 import com.example.przypominajka.models.Event;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
+import com.example.przypominajka.utils.ReminderBroadcast;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 
 import java.util.Calendar;
+import java.util.Objects;
 
 import yuku.ambilwarna.AmbilWarnaDialog;
 
@@ -56,7 +69,6 @@ public class AddNewEventActivity extends AppCompatActivity {
     // Event color section
     private int eventColorNumber;
     private int defaultColor;
-    private Button chooseColorButton;
 
     // timeInterval and start date section
     private int timeIntervalNumber;
@@ -69,7 +81,7 @@ public class AddNewEventActivity extends AppCompatActivity {
     private EditText monthNumberOfRepeatsField;
     private EditText monthWhichDayField;
     private CheckBox monthDefaultTimeCheckbox;
-    private TextView monthIntervalTimeField;
+    private TextView monthSectionTimeOfEventField;
     private TimePickerDialog timePickerDialogitsMonthInterval;
 
     // short time interval section
@@ -95,6 +107,10 @@ public class AddNewEventActivity extends AppCompatActivity {
     private DatePickerDialog.OnDateSetListener dateSetListenerOneTime;
     private TimePickerDialog timePickerDialogOneTime;
 
+    LocalDate startDateLocalData;
+
+    private boolean itsEventDefaultTime;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,6 +120,7 @@ public class AddNewEventActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         // and back button
         ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
         actionBar.setDisplayHomeAsUpEnabled(true);
 
         // event name
@@ -144,13 +161,11 @@ public class AddNewEventActivity extends AppCompatActivity {
     // back to previous window when back button on toolbar is clicked
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                super.onBackPressed();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == android.R.id.home) {
+            super.onBackPressed();
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     private void eventNameSectionProperties() {
@@ -172,19 +187,19 @@ public class AddNewEventActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                Cursor cursor = przypominajkaDatabaseHelper.getEvent(s.toString().replaceAll(" ", "_"));
-                if (cursor.getCount() != 0) {
+                Event event = przypominajkaDatabaseHelper.getEvent(s.toString().replaceAll(" ", "_"));
+                if (event != null) {
                     ColorStateList colorStateList = ColorStateList.valueOf(Color.RED);
                     eventNameField.setTextColor(Color.RED);
                     eventNameField.setLinkTextColor(Color.RED);
-                    if (Integer.valueOf(android.os.Build.VERSION.SDK) >= 21) {
+                    if (Build.VERSION.SDK_INT >= 21) {
                         eventNameField.setBackgroundTintList(colorStateList);
                     }
                     eventNameWarningHintField.setText("Wydarzenie już istnieje");
                     eventNameWarningHintField.setTextColor(Color.RED);
                 } else {
                     ColorStateList colorStateList = ContextCompat.getColorStateList(context, R.color.colorAccent);
-                    if (Integer.valueOf(android.os.Build.VERSION.SDK) >= 21) {
+                    if (Build.VERSION.SDK_INT >= 21) {
                         eventNameField.setBackgroundTintList(colorStateList);
                     }
                     eventNameField.setTextColor(Color.GRAY);
@@ -199,8 +214,9 @@ public class AddNewEventActivity extends AppCompatActivity {
         eventColorNumber = defaultColor;
 
         // reset button background when activity starts working
-        chooseColorButton = findViewById(R.id.buttonChooseColor);
+        Button chooseColorButton = findViewById(R.id.buttonChooseColor);
         Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius);
+        assert unwrappedDrawable != null;
         Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
         DrawableCompat.setTint(wrappedDrawable, 0xE0E0E0);
         chooseColorButton.setBackground(wrappedDrawable);
@@ -219,6 +235,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                 defaultColor = color;
                 eventColorNumber = color;
                 Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius);
+                assert unwrappedDrawable != null;
                 Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
                 DrawableCompat.setTint(wrappedDrawable, eventColorNumber);
                 view.setBackground(wrappedDrawable);
@@ -250,6 +267,9 @@ public class AddNewEventActivity extends AppCompatActivity {
                         itsMonthInterval = true;
                         itsCustomTimeInterval = false;
                         itsOneTimeEvent = false;
+                        monthDefaultTimeCheckbox.setChecked(true);
+                        customTimeDefaultTimeCheckbox.setChecked(false);
+                        oneTimeDefaultTimeCheckbox.setChecked(false);
                         break;
                     case R.id.radioButtonJumpDay:
                         linearLayoutCustomSection.setVisibility(LinearLayout.VISIBLE);
@@ -258,6 +278,9 @@ public class AddNewEventActivity extends AppCompatActivity {
                         itsMonthInterval = false;
                         itsCustomTimeInterval = true;
                         itsOneTimeEvent = false;
+                        monthDefaultTimeCheckbox.setChecked(false);
+                        customTimeDefaultTimeCheckbox.setChecked(true);
+                        oneTimeDefaultTimeCheckbox.setChecked(false);
                         break;
                     case R.id.radioButtonOneTime:
                         linearLayoutCustomSection.setVisibility(LinearLayout.GONE);
@@ -266,6 +289,9 @@ public class AddNewEventActivity extends AppCompatActivity {
                         itsMonthInterval = false;
                         itsCustomTimeInterval = false;
                         itsOneTimeEvent = true;
+                        monthDefaultTimeCheckbox.setChecked(false);
+                        customTimeDefaultTimeCheckbox.setChecked(false);
+                        oneTimeDefaultTimeCheckbox.setChecked(true);
                         break;
                 }
             }
@@ -278,19 +304,19 @@ public class AddNewEventActivity extends AppCompatActivity {
         monthWhichDayField = findViewById(R.id.editMonthSectionWhichDay);
 
         monthDefaultTimeCheckbox = findViewById(R.id.checkboxMonthSectionlDefaultTime);
-        monthIntervalTimeField = findViewById(R.id.textMonthSectionTimeOfEvent);
+        monthSectionTimeOfEventField = findViewById(R.id.textMonthSectionTimeOfEvent);
         monthDefaultTimeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    monthIntervalTimeField.setVisibility(LinearLayout.GONE);
+                    monthSectionTimeOfEventField.setVisibility(LinearLayout.GONE);
                 } else {
-                    monthIntervalTimeField.setVisibility(LinearLayout.VISIBLE);
+                    monthSectionTimeOfEventField.setVisibility(LinearLayout.VISIBLE);
                 }
             }
         });
 
-        monthIntervalTimeField.setOnClickListener(new View.OnClickListener() {
+        monthSectionTimeOfEventField.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Use the current time as the default values for the picker
@@ -301,12 +327,18 @@ public class AddNewEventActivity extends AppCompatActivity {
                 timePickerDialogitsMonthInterval = new TimePickerDialog(AddNewEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String time = selectedHour + ":" + selectedMinute;
-                        monthIntervalTimeField.setText(time);
-                        monthIntervalTimeField.setTextSize(18);
+                        String minuteStringMonthSection;
+                        if (selectedMinute < 10) {
+                            minuteStringMonthSection = "0" + selectedMinute;
+                        } else {
+                            minuteStringMonthSection = String.valueOf(selectedMinute);
+                        }
+                        String time = selectedHour + ":" + minuteStringMonthSection;
+                        monthSectionTimeOfEventField.setText(time);
+                        monthSectionTimeOfEventField.setTextSize(18);
                         monthDefaultTimeCheckbox.forceLayout();
                     }
-                }, hour, minute, true);//Yes 24 hour time
+                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
                 timePickerDialogitsMonthInterval.setTitle("Wybierz godzinę");
                 timePickerDialogitsMonthInterval.show();
             }
@@ -383,20 +415,20 @@ public class AddNewEventActivity extends AppCompatActivity {
                 timePickerDialogCustomTime = new TimePickerDialog(AddNewEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String minute = "";
+                        String minuteCustomTimeSection;
                         if (selectedMinute < 10) {
-                            minute = "0" + selectedMinute;
+                            minuteCustomTimeSection = "0" + selectedMinute;
                         } else {
-                            minute = String.valueOf(selectedMinute);
+                            minuteCustomTimeSection = String.valueOf(selectedMinute);
                         }
-                        String time = selectedHour + ":" + minute;
+                        String time = selectedHour + ":" + minuteCustomTimeSection;
                         customTimeTimeOfEventField.setText(time);
                         customTimeTimeOfEventField.setTextSize(18);
                         customTimeDefaultTimeCheckbox.forceLayout(); // update view after resize textView
 
 
                     }
-                }, hour, minute, true);//Yes 24 hour time
+                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
                 timePickerDialogCustomTime.setTitle("Wybierz godzinę");
                 timePickerDialogCustomTime.show();
             }
@@ -408,7 +440,7 @@ public class AddNewEventActivity extends AppCompatActivity {
         oneTimeDate = "";
 
         oneTimeDefaultTimeCheckbox = findViewById(R.id.checkboxOneTimeDefaultTime);
-        oneTimeEventTimeField = findViewById(R.id.editOneTimeTimeOfEvent);
+        oneTimeEventTimeField = findViewById(R.id.textOneTimeTimeOfEvent);
         oneTimeDefaultTimeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -433,7 +465,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                 DatePickerDialog datePickerDialogOneTime = new DatePickerDialog(AddNewEventActivity.this,
                         android.R.style.Theme_Holo_Light_Dialog_MinWidth,
                         dateSetListenerOneTime, year, month, day);
-                datePickerDialogOneTime.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                Objects.requireNonNull(datePickerDialogOneTime.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 datePickerDialogOneTime.show();
             }
         });
@@ -459,12 +491,18 @@ public class AddNewEventActivity extends AppCompatActivity {
                 timePickerDialogOneTime = new TimePickerDialog(AddNewEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String time = selectedHour + ":" + selectedMinute;
+                        String minuteOneTimeSection;
+                        if (selectedMinute < 10) {
+                            minuteOneTimeSection = "0" + selectedMinute;
+                        } else {
+                            minuteOneTimeSection = String.valueOf(selectedMinute);
+                        }
+                        String time = selectedHour + ":" + minuteOneTimeSection;
                         oneTimeEventTimeField.setText(time);
                         oneTimeEventTimeField.setTextSize(18);
                         oneTimeDefaultTimeCheckbox.forceLayout();
                     }
-                }, hour, minute, true);//Yes 24 hour time
+                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
                 timePickerDialogOneTime.setTitle("Wybierz godzinę");
                 timePickerDialogOneTime.show();
             }
@@ -486,7 +524,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                 DatePickerDialog datePickerDialog = new DatePickerDialog(AddNewEventActivity.this,
                         android.R.style.Theme_Holo_Light_Dialog_MinWidth,
                         dateSetListenerStartEventDate, year, month, day);
-                datePickerDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                Objects.requireNonNull(datePickerDialog.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 datePickerDialog.show();
             }
         });
@@ -504,57 +542,137 @@ public class AddNewEventActivity extends AppCompatActivity {
 
 
     // get everything field, make new Event object and seve event to database
+    // make new AsyncTask class with split saveEvent method to do this with ProgressDialog
+    // AsyncTask in API 30 is deprecated so TODO for new API
+
+    // using DateTimeZone as Universal repair bugs with Time Zone when set Alarm on current time
     public void buttonSaveNewEvent(View view) {
 
-        if (eventNameWarningHintField.getText().toString() == "Wydarzenie już istnieje") {
-            Toast.makeText(this, "Podaj inną nazwę wydarzenia", Toast.LENGTH_LONG).show();
-            ;
-            return;
+        SaveEventTask task = new SaveEventTask(this);
+        task.execute();
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private final class SaveEventTask extends AsyncTask<Void, Void, Void> {
+        ProgressDialog dialog;
+        Context context;
+        boolean result = false;
+        Event newEvent;
+        LocalTime time;
+
+        public SaveEventTask(Context context) {
+            this.context = context;
+            dialog = new ProgressDialog(context);
         }
 
-        LocalDate startDateLocalData = LocalDate.parse(startEventDate, DateTimeFormat.forPattern("dd.MM.YYYY"));
-        LocalDate oneTimeEventDate;
-        if (oneTimeDate.equals("")) {
-            oneTimeEventDate = null;
-        } else {
-            oneTimeEventDate = LocalDate.parse(oneTimeDate, DateTimeFormat.forPattern("dd.MM.YYYY"));
-        }
+        @Override
+        protected void onPreExecute() {
+            dialog.setTitle("Tworzenie wydarzenia");
+            dialog.setMessage("Proszę czekać");
+            dialog.setIndeterminate(true);
+            dialog.setCancelable(false);
+            dialog.show();
 
-        if (itsCustomTimeInterval) {
-            timeIntervalNumber = Integer.parseInt(customTimeIntervalField.getText().toString());
-        }
-        if (itsMonthInterval) {
-            timeIntervalNumber = Integer.parseInt(monthWhichDayField.getText().toString());
-        }
-        if (itsOneTimeEvent) {
-            timeIntervalNumber = 0;
-        }
-        if (customTimeDayChechbox.isChecked()) {
-            customTimeType = 1;
-        } else if (customTimeWeekChechbox.isChecked()) {
-            customTimeType = 2;
-        } else if (customTimeMonthChechbox.isChecked()) {
-            customTimeType = 3;
-        }
-        int monthNumberOfRepeats;
-        if (monthNumberOfRepeatsField.getText().toString().length() > 0) {
-            monthNumberOfRepeats = Integer.parseInt(monthNumberOfRepeatsField.getText().toString());
-        } else {
-            monthNumberOfRepeats = 0;
-        }
+            if (eventNameWarningHintField.getText().toString().equals("Wydarzenie już istnieje")) {
+                Toast.makeText(context, "Podaj inną nazwę wydarzenia", Toast.LENGTH_LONG).show();
+                return;
+            }
 
-        int shortTimeNumberOfRepeats;
-        if (customTimeNumberOfRepeatsField.getText().toString().length() > 0) {
-            shortTimeNumberOfRepeats = Integer.parseInt(customTimeNumberOfRepeatsField.getText().toString());
-        } else {
-            shortTimeNumberOfRepeats = 0;
-        }
+            startDateLocalData = LocalDate.parse(startEventDate, DateTimeFormat.forPattern("dd.MM.YYYY"));
+            LocalDate oneTimeEventDate;
+            if (oneTimeDate.equals("")) {
+                oneTimeEventDate = null;
+            } else {
+                oneTimeEventDate = LocalDate.parse(oneTimeDate, DateTimeFormat.forPattern("dd.MM.YYYY"));
+            }
+
+            if (itsCustomTimeInterval) {
+                timeIntervalNumber = Integer.parseInt(customTimeIntervalField.getText().toString());
+            }
+            if (itsMonthInterval) {
+                timeIntervalNumber = Integer.parseInt(monthWhichDayField.getText().toString());
+            }
+            if (itsOneTimeEvent) {
+                timeIntervalNumber = 0;
+            }
+            if (customTimeDayChechbox.isChecked()) {
+                customTimeType = 1;
+            } else if (customTimeWeekChechbox.isChecked()) {
+                customTimeType = 2;
+            } else if (customTimeMonthChechbox.isChecked()) {
+                customTimeType = 3;
+            }
+            int monthNumberOfRepeats;
+            if (monthNumberOfRepeatsField.getText().toString().length() > 0) {
+                monthNumberOfRepeats = Integer.parseInt(monthNumberOfRepeatsField.getText().toString());
+            } else {
+                monthNumberOfRepeats = 0;
+            }
+
+            int shortTimeNumberOfRepeats;
+            if (customTimeNumberOfRepeatsField.getText().toString().length() > 0) {
+                shortTimeNumberOfRepeats = Integer.parseInt(customTimeNumberOfRepeatsField.getText().toString());
+            } else {
+                shortTimeNumberOfRepeats = 0;
+            }
 
 
-        try {
-
-
-            Event newEvent = new Event(eventNameField.getText().toString(),
+            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+            long eventTime = time.getMillisOfDay();
+            if (itsMonthInterval) {
+                if (monthDefaultTimeCheckbox.isChecked()) {
+                    itsEventDefaultTime = true;
+                    time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+                    eventTime = time.getMillisOfDay();
+                } else {
+                    TextView monthTime = findViewById(R.id.textMonthSectionTimeOfEvent);
+                    if (monthTime.getText().toString().equals("wybierz godzinę")) {
+                        Toast.makeText(context, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
+                        return;
+                    } else {
+                        time = LocalTime.parse(monthTime.getText().toString(), DateTimeFormat.forPattern("HH:mm"));
+                        time = new LocalTime(time, DateTimeZone.forID("Etc/Universal"));
+                        eventTime = time.getMillisOfDay();
+                    }
+                }
+            } else if (itsCustomTimeInterval) {
+                if (customTimeDefaultTimeCheckbox.isChecked()) {
+                    itsEventDefaultTime = true;
+                    time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+                    eventTime = time.getMillisOfDay();
+                } else {
+                    TextView customTime = findViewById(R.id.textCustomTimeEventTime);
+                    if (customTime.getText().toString().equals("wybierz godzinę")) {
+                        Toast.makeText(context, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
+                        return;
+                    } else {
+                        time = LocalTime.parse(customTime.getText().toString(), DateTimeFormat.forPattern("HH:mm"));
+                        time = new LocalTime(time, DateTimeZone.forID("Etc/Universal"));
+                        eventTime = time.getMillisOfDay();
+                    }
+                }
+            } else if (itsOneTimeEvent) {
+                if (oneTimeDefaultTimeCheckbox.isChecked()) {
+                    itsEventDefaultTime = true;
+                    time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+                    eventTime = time.getMillisOfDay();
+                } else {
+                    TextView oneTimeTime = findViewById(R.id.textOneTimeTimeOfEvent);
+                    if (oneTimeTime.getText().toString().equals("wybierz godzinę")) {
+                        Toast.makeText(context, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
+                        return;
+                    } else {
+                        time = LocalTime.parse(oneTimeTime.getText().toString(), DateTimeFormat.forPattern("HH:mm"));
+                        time = new LocalTime(time, DateTimeZone.forID("Etc/Universal"));
+                        eventTime = time.getMillisOfDay();
+                    }
+                }
+            }
+            boolean checkIfItsCorrect = checkIfNotNull();
+            if (!checkIfItsCorrect) {
+                return;
+            }
+            newEvent = new Event(eventNameField.getText().toString(),
                     eventDiscriptionField.getText().toString(),
                     eventColorNumber,
                     itsMonthInterval,
@@ -565,17 +683,144 @@ public class AddNewEventActivity extends AppCompatActivity {
                     shortTimeNumberOfRepeats,
                     itsOneTimeEvent,
                     oneTimeEventDate,
+                    itsEventDefaultTime,
+                    eventTime,
                     timeIntervalNumber, startDateLocalData);
-            boolean addEvent = przypominajkaDatabaseHelper.insertEvent(newEvent);
-            if (addEvent) {
-                Toast.makeText(this, "Dodawanie zdarzenia powiodło się", Toast.LENGTH_SHORT).show();
-                this.finish();
-            } else {
-                Toast.makeText(this, "Wystąpił problem podczas dodawania zdarzenia", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+
+            super.onPreExecute();
+
         }
 
+        @Override
+        protected Void doInBackground(Void... voids) {
+            dialog.show();
+            try {
+                result = przypominajkaDatabaseHelper.insertEvent(newEvent);
+            } catch (Exception e) {
+                Log.d("doInBackground", Objects.requireNonNull(e.getMessage()));
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            dialog.show();
+            if (result) {
+                // if event insert was successful set first alarm for nearest date
+                DateTime tempEventTime;
+                if (itsEventDefaultTime) {
+                    LocalTime defaultTime = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+                    tempEventTime = new DateTime(startDateLocalData.getYear(), startDateLocalData.getMonthOfYear(),
+                            startDateLocalData.getDayOfMonth(), defaultTime.getHourOfDay(), defaultTime.getMinuteOfHour());
+                } else {
+                    tempEventTime = new DateTime(startDateLocalData.getYear(), startDateLocalData.getMonthOfYear(),
+                            startDateLocalData.getDayOfMonth(), time.getHourOfDay(), time.getMinuteOfHour());
+                }
+
+                if (tempEventTime.getMillis() < DateTime.now().getMillis()) {
+                    tempEventTime = tempEventTime.plusDays(1);
+                }
+
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                PendingIntent alarmIntent;
+
+                // Event ID from table is a unique ID for Intent and Pending Intent, two event cannot have this same ID
+                // so this value is perfect for this
+                int eventID = przypominajkaDatabaseHelper.getEventId(eventNameField.getText().toString());
+                if (eventID != -1) {
+                    Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+                    notificationIntent.putExtra("NOTIFY_TEXT", eventNameField.getText().toString());
+                    notificationIntent.putExtra("ID", eventID);
+
+                    alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                            eventID,
+                            notificationIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+                } else {
+                    Log.d("AddNewEvent", "Problem z pobraniem ID wydarzenia z bazy");
+                    return;
+                }
+
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
+                przypominajkaDatabaseHelper.updateNotificationCreatedColumn(eventNameField.getText().toString(), true,
+                        new LocalDate(tempEventTime.getYear(), tempEventTime.getMonthOfYear(), tempEventTime.getDayOfMonth()));
+
+                Log.d("AddNewEvent", "Stworzono powiadomienie dla " + eventNameField.getText().toString() + " o godzinie " + tempEventTime.toString());
+
+                boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(eventNameField.getText().toString(),
+                        new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()),
+                        tempEventTime.toLocalDate(), false);
+                if (insertNotify) {
+                    Log.d("AddNewEvent", "Dodano powiadomienie dla " + eventNameField.getText().toString() + " " + tempEventTime.toLocalDate().toString()
+                            + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
+                } else {
+                    Log.d("AddNewEvent", "Nie udało się dodać informacji o powiadomieniu");
+                }
+                Toast.makeText(context, "Dodawanie zdarzenia powiodło się", Toast.LENGTH_SHORT).show();
+                AddNewEventActivity.this.finish();
+            } else {
+                Toast.makeText(context, "Wystąpił problem podczas dodawania zdarzenia", Toast.LENGTH_SHORT).show();
+            }
+
+            super.onPostExecute(aVoid);
+            if (dialog.isShowing())
+                dialog.dismiss();
+        }
+    }
+
+    // method to check everything field to avoid empty or null values
+    private boolean checkIfNotNull() {
+        if (eventNameField.getText().toString().equals("")) {
+            Toast.makeText(this, "Nie podano nazwy", Toast.LENGTH_LONG).show();
+            return false;
+        } else if (eventColorNumber == 0xE0E0E0) {
+            Toast.makeText(this, "Nie wybrano koloru", Toast.LENGTH_LONG).show();
+            return false;
+        } else if (itsMonthInterval) {
+            if (monthNumberOfRepeatsField.getText().toString().equals("")) {
+                Toast.makeText(this, "Nie wpisano liczby powtorzeń", Toast.LENGTH_LONG).show();
+                return false;
+            } else if (monthWhichDayField.getText().toString().equals("")) {
+                Toast.makeText(this, "Nie wpisano dnia miesiąca", Toast.LENGTH_LONG).show();
+                return false;
+            } else if (!monthDefaultTimeCheckbox.isChecked()) {
+                if (monthSectionTimeOfEventField.getText().toString().equals("wybierz godzinę")) {
+                    Toast.makeText(this, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            }
+        } else if (itsCustomTimeInterval) {
+            if (!customTimeRepeatAllTimeChechbox.isChecked()) {
+                if (customTimeNumberOfRepeatsField.getText().toString().equals("")) {
+                    Toast.makeText(this, "Nie wpisano liczby powtorzeń", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            } else if (customTimeIntervalField.getText().toString().equals("")) {
+                Toast.makeText(this, "Nie wpisano liczby dni/tygodni/miesięcy", Toast.LENGTH_LONG).show();
+                return false;
+            } else if (!customTimeDefaultTimeCheckbox.isChecked()) {
+                if (customTimeTimeOfEventField.getText().toString().equals("wybierz godzinę")) {
+                    Toast.makeText(this, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            } else if (customTimeType == 0) {
+                Toast.makeText(this, "Nie wybrano typu zdarzenia (dni, tygodni, miesięcy)", Toast.LENGTH_LONG).show();
+                return false;
+            }
+        } else if (itsOneTimeEvent) {
+            if (oneTimeEventDateField.getText().toString().equals("")) {
+                Toast.makeText(this, "Nie wybrano daty zdarzenia", Toast.LENGTH_LONG).show();
+                return false;
+            } else if (!oneTimeDefaultTimeCheckbox.isChecked()) {
+                if (oneTimeEventTimeField.getText().toString().equals("wybierz godzinę")) {
+                    Toast.makeText(this, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            } else if (startDateLocalData == null) {
+                Toast.makeText(this, "Nie wybrano daty rozpoczęcia zdarzenia", Toast.LENGTH_LONG).show();
+                return false;
+            }
+        }
+        return true;
     }
 }
