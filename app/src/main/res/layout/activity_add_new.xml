@@ -5,6 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.AddNewEventActivity">
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="visible"
+    android:id="@+id/scroll_view_content">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +30,7 @@
             android:orientation="vertical"
             tools:layout_editor_absoluteX="1dp"
             tools:layout_editor_absoluteY="1dp"
-            android:padding="18dp">
+            android:padding="20dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -37,7 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/event_name"
-                    android:textSize="18sp"
+                    android:textSize="15sp"
                     android:layout_gravity="center_horizontal|center_vertical" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -56,13 +61,15 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:ems="10"
                             android:gravity="end"
+                            android:ems="15"
                             android:hint="@string/write_event_name_hint"
                             android:inputType="textMultiLine|textCapSentences"
                             android:singleLine="false"
                             app:layout_constraintEnd_toEndOf="parent"
-                            android:autofillHints="" />
+                            android:autofillHints=""
+                            android:layout_gravity="end"
+                            android:textSize="15sp" />
 
                         <TextView
                             android:id="@+id/text_hint"
@@ -84,14 +91,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="20dp">
 
                 <TextView
                     android:id="@+id/textViewEventDiscription"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/event_discription"
-                    android:textSize="18sp"
+                    android:textSize="15sp"
                     android:layout_gravity="center_horizontal|center_vertical" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -103,20 +110,21 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:ems="10"
+                        android:ems="15"
                         android:hint="@string/write_discription"
                         app:layout_constraintEnd_toEndOf="parent"
                         android:inputType="textMultiLine|textCapSentences"
                         android:gravity="end"
                         tools:ignore="MissingConstraints"
-                        android:autofillHints="" />
+                        android:autofillHints=""
+                        android:textSize="15sp" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="20dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -124,7 +132,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/event_color"
-                    android:textSize="18sp"
+                    android:textSize="15sp"
                     android:layout_gravity="center_vertical|center_horizontal" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -154,14 +162,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="10dp">
+                android:layout_marginTop="20dp">
 
                 <TextView
                     android:id="@+id/textRodzaj"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/event_type"
-                    android:textSize="18sp"
+                    android:textSize="15sp"
                     android:layout_gravity="center_horizontal|center_vertical" />
 
             </LinearLayout>
@@ -177,7 +185,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/in_current_day_of_month"
-                    android:textSize="16sp" />
+                    android:textSize="15sp"
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -185,7 +194,7 @@
                     android:orientation="vertical"
                     android:background="#EEEEEE"
                     android:id="@+id/linearLayoutMonthSection"
-                    android:visibility="visible">
+                    android:visibility="gone">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -197,7 +206,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/day_of_month"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:paddingLeft="30dp"
                             android:paddingStart="30dp"
                             tools:ignore="RtlSymmetry"
@@ -222,7 +231,8 @@
                                 app:layout_constraintEnd_toEndOf="parent"
                                 tools:ignore="MissingConstraints"
                                 android:autofillHints=""
-                                android:visibility="visible" />
+                                android:visibility="visible"
+                                android:textSize="15sp" />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -247,7 +257,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/how_many_repeats"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:layout_gravity="center_vertical|center_horizontal"
                             android:paddingLeft="30dp"
                             android:paddingStart="30dp"
@@ -266,7 +276,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-
+                                android:textSize="15sp"
                                 android:gravity="end"
                                 android:hint="@string/number_of_months"
                                 android:inputType="number"
@@ -299,7 +309,7 @@
                             android:layout_gravity="center_vertical|center_horizontal"
                             android:paddingLeft="30dp"
                             android:text="@string/time_word"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:paddingStart="30dp"
                             tools:ignore="RtlSymmetry" />
 
@@ -315,11 +325,12 @@
                                 android:layout_height="match_parent"
                                 android:layout_marginEnd="3dp"
                                 android:layout_marginRight="3dp"
-                                android:checked="true"
+                                android:checked="false"
                                 android:text="@string/time_default"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
+                                app:layout_constraintTop_toTopOf="parent"
+                                android:textSize="15sp" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -345,7 +356,7 @@
                                 android:paddingStart="15dp"
                                 android:paddingLeft="15dp"
                                 android:text="@string/set_time_text"
-                                android:textSize="16sp"
+                                android:textSize="15sp"
                                 android:visibility="gone"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
@@ -363,7 +374,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/cyclically_at_time_intervals"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp" />
 
 
                 <LinearLayout
@@ -386,7 +398,7 @@
                             android:layout_gravity="center_vertical|center_horizontal"
                             android:paddingLeft="30dp"
                             android:text="@string/remind_what"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:paddingStart="30dp"
                             tools:ignore="RtlSymmetry" />
 
@@ -409,7 +421,8 @@
                                 android:paddingStart="10dp"
                                 android:paddingLeft="10dp"
                                 tools:ignore="MissingConstraints,RtlSymmetry"
-                                android:autofillHints="" />
+                                android:autofillHints=""
+                                android:textSize="15sp" />
 
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -432,19 +445,22 @@
                                     android:id="@+id/checkBoxCustomTimeDay"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/day" />
+                                    android:text="@string/day"
+                                    android:textSize="15sp" />
 
                                 <CheckBox
                                     android:id="@+id/checkBoxCustomTimeWeek"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/week" />
+                                    android:text="@string/week"
+                                    android:textSize="15sp" />
 
                                 <CheckBox
                                     android:id="@+id/checkBoxCustomTimeMonth"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/month" />
+                                    android:text="@string/month"
+                                    android:textSize="15sp" />
 
                             </LinearLayout>
 
@@ -475,7 +491,7 @@
                             android:layout_gravity="center_vertical|center_horizontal"
                             android:paddingLeft="30dp"
                             android:text="@string/how_many_repeats"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:paddingStart="30dp"
                             tools:ignore="RtlSymmetry" />
 
@@ -498,7 +514,8 @@
                                 android:singleLine="true"
                                 android:text="@string/repeats_allways"
                                 app:layout_constraintEnd_toEndOf="parent"
-                                tools:ignore="RtlSymmetry" />
+                                tools:ignore="RtlSymmetry"
+                                android:textSize="15sp" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -520,7 +537,7 @@
                                 android:visibility="gone"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 tools:ignore="MissingConstraints"
-                                android:textSize="18sp"
+                                android:textSize="15sp"
                                 android:importantForAutofill="no" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -549,7 +566,7 @@
                             android:layout_gravity="center_vertical|center_horizontal"
                             android:paddingLeft="30dp"
                             android:text="@string/time_word"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:paddingStart="30dp"
                             tools:ignore="RtlSymmetry" />
 
@@ -565,11 +582,12 @@
                                 android:layout_height="match_parent"
                                 android:layout_marginEnd="3dp"
                                 android:layout_marginRight="3dp"
-                                android:checked="true"
+                                android:checked="false"
                                 android:text="@string/time_default"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
+                                app:layout_constraintTop_toTopOf="parent"
+                                android:textSize="15sp" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -595,7 +613,7 @@
                                 android:paddingStart="15dp"
                                 android:paddingLeft="15dp"
                                 android:text="@string/set_time_text"
-                                android:textSize="16sp"
+                                android:textSize="15sp"
                                 android:visibility="gone"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
@@ -613,7 +631,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/one_time"
-                    android:textSize="16sp" />
+                    android:textSize="15sp"
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -634,7 +653,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/date_of_event"
-                            android:textSize="18sp"
+                            android:textSize="15sp"
                             android:paddingStart="30dp"
                             android:paddingLeft="30dp"
                             tools:ignore="RtlSymmetry" />
@@ -656,7 +675,7 @@
                                 android:layout_weight="1"
                                 android:gravity="end"
                                 android:hint="@string/click_to_choose"
-                                android:textSize="18sp"
+                                android:textSize="15sp"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 tools:ignore="MissingConstraints" />
                         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -702,7 +721,7 @@
                                 android:layout_height="match_parent"
                                 android:layout_marginEnd="3dp"
                                 android:layout_marginRight="3dp"
-                                android:checked="true"
+                                android:checked="false"
                                 android:text="@string/time_default"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
@@ -720,7 +739,7 @@
 
 
                             <TextView
-                                android:id="@+id/editOneTimeTimeOfEvent"
+                                android:id="@+id/textOneTimeTimeOfEvent"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="3dp"
@@ -753,13 +772,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="15dp">
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/start_from"
-                    android:textSize="18sp" />
+                    android:textSize="15sp" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -771,7 +791,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="@string/click_to_choose"
-                        android:textSize="18sp"
+                        android:textSize="15sp"
                         app:layout_constraintEnd_toEndOf="parent"
                         android:gravity="end"
                         tools:ignore="MissingConstraints" />
@@ -799,4 +819,5 @@
 
         </LinearLayout>
     </LinearLayout>
+</ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
