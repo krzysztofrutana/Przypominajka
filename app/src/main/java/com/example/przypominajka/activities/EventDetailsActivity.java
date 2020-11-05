@@ -8,6 +8,8 @@ import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -22,6 +24,7 @@ import android.widget.Toast;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
 import com.example.przypominajka.models.Event;
+import com.example.przypominajka.utils.ReminderBroadcast;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -112,7 +115,22 @@ public class EventDetailsActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.delete_event:
                 // deleting event
+                int eventID = przypominajkaDatabaseHelper.getEventId(eventName);
                 boolean deleteEvent = przypominajkaDatabaseHelper.deleteEvent(eventName);
+                przypominajkaDatabaseHelper.deleteNotification(eventName);
+
+                Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+                notificationIntent.putExtra("NOTIFY_TEXT", eventName);
+                notificationIntent.putExtra("ID", eventID);
+
+                PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                        eventID,
+                        notificationIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                alarmManager.cancel(alarmIntent);
+
                 if (deleteEvent) {
                     Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
                     super.onBackPressed();

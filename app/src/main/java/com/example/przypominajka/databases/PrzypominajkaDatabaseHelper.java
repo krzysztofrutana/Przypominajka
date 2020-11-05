@@ -684,4 +684,17 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
             return false;
         }
     }
+
+    public void deleteNotification(String notificationName) {
+        try {
+            notificationName = notificationName.replace(" ", "_");
+            SQLiteDatabase db = this.getReadableDatabase();
+            String query = "DELETE FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" +
+                    " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\"";
+            db.execSQL(query);
+
+        } catch (Exception e) {
+            Log.w("SQLite checkIfNotificationIsCreated", "Problem z zapytaniem do bazy danych " + e.getMessage());
+        }
+    }
 }
