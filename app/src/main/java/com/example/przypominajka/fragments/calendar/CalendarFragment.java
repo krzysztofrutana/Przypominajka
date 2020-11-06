@@ -263,13 +263,12 @@ public class CalendarFragment extends Fragment {
                             Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
                             Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
                             return;
-                        }
-                        if (events.size() > 0) {
+                        } else if (events.size() == 0) {
                             eventColorForCurrentDateArray.clear();
-                            for (int j = 0; j < events.size(); j++) {
-
-                                Event tempEvent = events.get(j);
-
+                            Log.d("SQLite setCurrentMonth", "Brak wydarzeń do pokazania");
+                        } else {
+                            eventColorForCurrentDateArray.clear();
+                            for (Event tempEvent : events) {
                                 boolean isEventToday = przypominajkaDatabaseHelper.checkTableForCurrentDate(tempDataTime,
                                         tempEvent.getEventName());
                                 if (isEventToday) {

@@ -145,7 +145,7 @@ public class EventDetailsActivity extends AppCompatActivity {
 
                 if (deleteEvent) {
                     Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
-                    super.onBackPressed();
+                    this.finish();
                     return true;
                 } else {
                     Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
