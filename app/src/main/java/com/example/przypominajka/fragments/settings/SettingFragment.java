@@ -31,6 +31,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Calendar;
+import java.util.TimeZone;
 
 public class SettingFragment extends Fragment {
 
@@ -61,7 +62,7 @@ public class SettingFragment extends Fragment {
         if (przypominajkaDatabaseHelper.getDefaultTime() == 0) {
             defaultTimeField.setText("wybierz godzinę");
         } else {
-            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("UCT"));
             defaultTimeField.setText(time.toString(DateTimeFormat.forPattern("HH:mm")));
         }
         defaultTimeField.setOnClickListener(new View.OnClickListener() {
@@ -97,7 +98,7 @@ public class SettingFragment extends Fragment {
         if (przypominajkaDatabaseHelper.getCheckEventInterval() == 0) {
             eventRefreshIntervalField.setText("wybierz czas");
         } else {
-            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getCheckEventInterval(), DateTimeZone.forID("Etc/Universal"));
+            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getCheckEventInterval(), DateTimeZone.forID("UCT"));
             eventRefreshIntervalField.setText(time.toString(DateTimeFormat.forPattern("HH:mm")));
         }
         eventRefreshIntervalField.setOnClickListener(new View.OnClickListener() {

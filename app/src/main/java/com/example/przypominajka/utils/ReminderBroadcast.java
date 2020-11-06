@@ -31,9 +31,11 @@ public class ReminderBroadcast extends BroadcastReceiver {
 
         String text = intent.getStringExtra("NOTIFY_TEXT");
         notifyID = intent.getIntExtra("ID", 100);
-
         Log.d("onReceive", "text : " + text + " notifyID: " + notifyID);
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (text == null) {
+            return;
+        }
 
         Intent intentMainActivity = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context,
@@ -44,19 +46,19 @@ public class ReminderBroadcast extends BroadcastReceiver {
                 .setSmallIcon(R.drawable.ic_baseline_alarm_24)
                 .setContentTitle("Zbliżające się wydarzenia")
                 .setContentText(text)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
-        przypominajkaDatabaseHelper.updateNotificationCompleted(text, true, LocalDate.now());
+        przypominajkaDatabaseHelper.updateNotificationCompleted(text, LocalDate.now(), true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             manager.createNotificationChannel(channel);
             manager.notify(notifyID, builder.build());
         } else {
             NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
-
             notificationManagerCompat.notify(notifyID, builder.build());
         }
 

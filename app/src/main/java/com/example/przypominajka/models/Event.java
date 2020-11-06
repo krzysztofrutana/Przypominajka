@@ -130,7 +130,7 @@ public class Event {
     }
 
     public LocalTime getEventTime() {
-        return new LocalTime(eventTime, DateTimeZone.forID("Etc/Universal"));
+        return new LocalTime(eventTime, DateTimeZone.UTC);
     }
 
     public long getEventTimeInMillis() {

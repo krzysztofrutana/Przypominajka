@@ -6,16 +6,21 @@ import android.app.job.JobParameters;
 import android.content.Intent;
 import android.util.Log;;
 
+import androidx.annotation.LongDef;
+
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.models.Event;
+import com.example.przypominajka.models.Notification;
 import com.example.przypominajka.utils.ReminderBroadcast;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 // class to set alarm for notification, run in custom time interval or when turn on application
 // method of setting alarm is this same as in AddNewActivity class
@@ -77,29 +82,38 @@ public class SetAlarmService extends android.app.job.JobService {
                             if (!isCreated) {
                                 AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
+                                int year = nextDayDate.getYear();
+                                String yearShortString = Integer.toString(year).substring(2);
+                                int yearShort = Integer.parseInt(yearShortString);
+
+                                int notifyPendingIntentID = Integer.parseInt(String.valueOf(przypominajkaDatabaseHelper.getEventId(tempEvent.getEventName()) +
+                                        String.valueOf(nextDayDate.getDayOfYear()) + String.valueOf(yearShort)));
+
                                 Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
                                 notificationIntent.putExtra("NOTIFY_TEXT", tempEvent.getEventName());
-                                notificationIntent.putExtra("ID", przypominajkaDatabaseHelper.getEventId(tempEvent.getEventName()));
-                                notificationIntent.putExtra("TIME", nextDayDate.toString());
+                                notificationIntent.putExtra("ID", notifyPendingIntentID);
 
                                 PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                                        przypominajkaDatabaseHelper.getEventId(tempEvent.getEventName()),
+                                        notifyPendingIntentID,
                                         notificationIntent,
                                         PendingIntent.FLAG_UPDATE_CURRENT);
 
+                                Log.d("setAlarmService", "ID " + notifyPendingIntentID);
                                 LocalTime eventTime = tempEvent.getEventTime();
 
-                                DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
-                                        nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour());
 
-                                alarmManager.set(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
+                                DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
+                                        nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour())
+                                        .withZoneRetainFields(DateTimeZone.forID(TimeZone.getDefault().getID()));
+
+                                alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
 
                                 przypominajkaDatabaseHelper.updateNotificationCreatedColumn(tempEvent.getEventName(), true, nextDayDate);
 
                                 Log.d("OnStartJob", "Stworzono powiadomienie dla " + tempEvent.getEventName() + " o godzinie " + tempEventTime.toString());
-                                boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(tempEvent.getEventName(),
-                                        new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()),
-                                        tempEventTime.toLocalDate(), false);
+                                Notification newNotification = new Notification(tempEvent.getEventName(), notifyPendingIntentID,
+                                        new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()), tempEventTime.toLocalDate(), false);
+                                boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(newNotification);
 
                                 if (insertNotify) {
                                     Log.d("OnStartJob", "Dodano powiadomienie dla " + tempEvent.getEventName() + " " + tempEventTime.toLocalDate().toString()
@@ -138,36 +152,41 @@ public class SetAlarmService extends android.app.job.JobService {
                         }
                     }
                 }
-                if (!przypominajkaDatabaseHelper.checkNotificationCreatedButNotNotify(eventsWithDefaultTime.toString(), nextDayDate, new LocalTime(przypominajkaDatabaseHelper.getDefaultTime()))) {
-                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                if (!eventsWithDefaultTime.toString().equals("")) {
+                    Notification tempNotification = new Notification(eventsWithDefaultTime.toString(), -nextDayDate.getDayOfYear(),
+                            new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("UTC")), nextDayDate, false);
+                    if (!przypominajkaDatabaseHelper.checkNotificationCreatedButNotNotify(tempNotification)) {
+                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-                    Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
-                    notificationIntent.putExtra("NOTIFY_TEXT", eventsWithDefaultTime.toString());
-                    notificationIntent.putExtra("ID", -nextDayDate.getDayOfYear());
 
-                    PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                            -nextDayDate.getDayOfYear(),
-                            notificationIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-                    Log.d("OnStartJob", String.valueOf(nextDayDate.getDayOfYear()));
+                        Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+                        notificationIntent.putExtra("NOTIFY_TEXT", eventsWithDefaultTime.toString());
+                        notificationIntent.putExtra("ID", -nextDayDate.getDayOfYear());
 
-                    LocalTime eventTime = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime());
+                        PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                                -nextDayDate.getDayOfYear(),
+                                notificationIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT);
+                        Log.d("OnStartJob", String.valueOf(nextDayDate.getDayOfYear()));
 
-                    DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
-                            nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour());
+                        LocalTime eventTime = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("UCT"));
+                        Log.d("setAlarmService", eventTime.toString());
 
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
+                        DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
+                                nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour())
+                                .withZoneRetainFields(DateTimeZone.forID(TimeZone.getDefault().getID()));
 
-                    boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(eventsWithDefaultTime.toString(),
-                            new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()),
-                            tempEventTime.toLocalDate(), false);
-                    if (insertNotify) {
-                        Log.d("OnStartJob", "Dodano powiadomienie dla " + eventsWithDefaultTime + " " + tempEventTime.toLocalDate().toString()
-                                + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
-                    } else {
-                        Log.d("OnStartJob", "Nie udało się dodać informacji o powiadomieniu");
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
+
+                        boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(tempNotification);
+                        if (insertNotify) {
+                            Log.d("OnStartJob", "Dodano powiadomienie dla " + eventsWithDefaultTime + " " + tempEventTime.toLocalDate().toString()
+                                    + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
+                        } else {
+                            Log.d("OnStartJob", "Nie udało się dodać informacji o powiadomieniu");
+                        }
+                        Log.d("OnStartJob", "Stworzono powiadomienie dla " + eventsWithDefaultTime + " o godzinie " + tempEventTime.toString());
                     }
-                    Log.d("OnStartJob", "Stworzono powiadomienie dla " + eventsWithDefaultTime + " o godzinie " + tempEventTime.toString());
                 }
             } catch (Exception e) {
                 Log.d("OnStartJob", "Problem z stworzeniem powiadomienia dla wydarzen domyślnych " + e.getMessage());

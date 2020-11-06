@@ -9,6 +9,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.przypominajka.models.Event;
+import com.example.przypominajka.models.Notification;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -17,6 +18,7 @@ import org.joda.time.LocalTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
@@ -50,6 +52,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TABLE_NOTIFICATIONS = "NOTIFICATIONS";
     private static final String NOTIFICATION_EVENT_NAME = "NOTIFICATION_EVENT_NAME";
+    private static final String NOTIFICATION_ID = "NOTIFICATION_ID";
     private static final String NOTIFICATION_DATE = "NOTIFICATION_DATE";
     private static final String NOTIFICATION_TIME = "NOTIFICATION_TIME";
     private static final String NOTIFICATION_COMPLETED = "NOTIFICATION_COMPLETED";
@@ -89,14 +92,12 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                     + DEFAULT_TIME + " REAL DEFAULT 0, "
                     + NOTIFY_CHECK_INTERVAL + " REAL DEFAULT 0);";
             db.execSQL(queryCreateSettingTable);
-            LocalTime defaultTime = new LocalTime(28800000, DateTimeZone.forID("Etc/Universal"));
-            LocalDate localDate = LocalDate.now();
-            DateTime dateTimeDefault = localDate.toDateTime(defaultTime, DateTimeZone.forID("Etc/Universal"));
-            long defaultTimeInMillis = dateTimeDefault.getMillisOfDay();
 
-            LocalTime intervalTime = new LocalTime(900000, DateTimeZone.forID("Etc/Universal"));
-            DateTime dateTimeInterval = localDate.toDateTime(intervalTime, DateTimeZone.forID("Etc/Universal"));
-            long intervalTimeInMillis = dateTimeInterval.getMillisOfDay();
+            LocalTime defaultTime = new LocalTime(28800000, DateTimeZone.forID("UCT"));
+            long defaultTimeInMillis = defaultTime.getMillisOfDay();
+
+            LocalTime intervalTime = new LocalTime(900000, DateTimeZone.forID("UCT"));
+            long intervalTimeInMillis = intervalTime.getMillisOfDay();
 
             ContentValues contentValues = new ContentValues();
             contentValues.put(DEFAULT_TIME, defaultTimeInMillis);
@@ -111,6 +112,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
             String queryNotificationTable = "CREATE TABLE " + TABLE_NOTIFICATIONS + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + NOTIFICATION_EVENT_NAME + " TEXT, "
+                    + NOTIFICATION_ID + " INTEGER DEFAULT 0, "
                     + NOTIFICATION_DATE + " REAL DEFAULT 0, "
                     + NOTIFICATION_TIME + " REAL DEFAULT 0, "
                     + NOTIFICATION_COMPLETED + " INTEGER DEFAULT 0);";
@@ -248,7 +250,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
             LocalDate newDate;
             if (itsEventTimeDefault) {
                 long defaultTime = getDefaultTime();
-                long currentTime = LocalTime.now().getMillisOfDay();
+                long currentTime = LocalTime.now(DateTimeZone.forID(TimeZone.getDefault().getID())).getMillisOfDay();
                 if (defaultTime > currentTime) {
                     newDate = startDate;
                 } else {
@@ -256,7 +258,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                 }
             } else {
                 long eventTimeInMillis = eventTime.getMillisOfDay();
-                long currentTime = LocalTime.now().getMillisOfDay();
+                long currentTime = LocalTime.now(DateTimeZone.forID(TimeZone.getDefault().getID())).getMillisOfDay();
                 if (eventTimeInMillis > currentTime) {
                     newDate = startDate;
                 } else {
@@ -550,14 +552,14 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
             @SuppressLint("Recycle") Cursor cursorItsDefault = db.rawQuery(queryItsDefault, null);
             cursorItsDefault.moveToFirst();
             if (cursorItsDefault.getInt(cursorItsDefault.getColumnIndex("EVENT_TIME_DEFAULT")) == 1) {
-                eventTime = new LocalTime(getDefaultTime());
+                eventTime = new LocalTime(getDefaultTime(), DateTimeZone.forID(TimeZone.getDefault().getID()));
                 cursorItsDefault.close();
             } else {
                 String queryEventTime = "SELECT " + "\"" + EVENT_TIME + "\"" + " FROM " + "\"" + TABLE_EVENTS + "\"" +
                         " WHERE " + "\"" + EVENT_NAME + "\"" + " = " + "\"" + eventName + "\"";
                 @SuppressLint("Recycle") Cursor cursorEventTime = db.rawQuery(queryEventTime, null);
                 cursorEventTime.moveToFirst();
-                eventTime = new LocalTime(cursorEventTime.getLong(cursorEventTime.getColumnIndex(EVENT_TIME)));
+                eventTime = new LocalTime(cursorEventTime.getLong(cursorEventTime.getColumnIndex(EVENT_TIME)), DateTimeZone.forID(TimeZone.getDefault().getID()));
                 cursorEventTime.close();
             }
             return eventTime;
@@ -609,23 +611,21 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // for TABLE_NOTIFICATION, insert information about created notification (name of event/events, date, time and information about display)
-    public boolean insertNotification(String eventName, LocalTime eventNotificationTime, LocalDate eventNotificationDate, boolean notificationCompleted) {
+    // for TABLE_NOTIFICATION, insert information about created notification (name of event/events, eventID, date, time and information about display)
+    public boolean insertNotification(Notification notification) {
         try {
-            eventName = eventName.replace(" ", "_");
-            long timeInMillis = eventNotificationTime.getMillisOfDay();
-            long dateInMillis = eventNotificationDate.toDateTimeAtStartOfDay().getMillis();
             int notificationCompl;
-            if (notificationCompleted) {
+            if (notification.itsCompleted()) {
                 notificationCompl = 1;
             } else {
                 notificationCompl = 0;
             }
             SQLiteDatabase db = this.getWritableDatabase();
             ContentValues contentValues = new ContentValues();
-            contentValues.put(NOTIFICATION_EVENT_NAME, eventName);
-            contentValues.put(NOTIFICATION_TIME, timeInMillis);
-            contentValues.put(NOTIFICATION_DATE, dateInMillis);
+            contentValues.put(NOTIFICATION_EVENT_NAME, notification.getNotificationName().replace(" ", "_"));
+            contentValues.put(NOTIFICATION_ID, notification.getNotificationID());
+            contentValues.put(NOTIFICATION_TIME, notification.getNotificationDateInMillis());
+            contentValues.put(NOTIFICATION_DATE, notification.getNotificationDateInMillis());
             contentValues.put(NOTIFICATION_COMPLETED, notificationCompl);
             float result = db.insert(TABLE_NOTIFICATIONS, null, contentValues);
             return result != -1;
@@ -635,21 +635,52 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    public List<Notification> getNoCompletedNotification(String notificationName) {
+        try {
+            SQLiteDatabase db = this.getReadableDatabase();
+            List<Notification> notifications = new ArrayList<>();
+            notificationName = notificationName.replace(" ", "_");
+            String query = "SELECT * FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" + " WHERE " + "\"" +
+                    NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\"" +
+                    " AND " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = 0;";
+            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                String tempNotificationName = cursor.getString(cursor.getColumnIndex(NOTIFICATION_EVENT_NAME));
+                int tempNotificationID = cursor.getInt(cursor.getColumnIndex(NOTIFICATION_ID));
+                long tempNotificationTime = cursor.getLong(cursor.getColumnIndex(NOTIFICATION_TIME));
+                long tempNotificationDate = cursor.getLong(cursor.getColumnIndex(NOTIFICATION_DATE));
+                boolean tempNotificationCompleted = cursor.getInt(cursor.getColumnIndex(NOTIFICATION_COMPLETED)) == 1;
+
+                Notification tempNotification = new Notification(tempNotificationName, tempNotificationID, new LocalTime(tempNotificationTime, DateTimeZone.forID("UTC")),
+                        new LocalDate(tempNotificationDate), tempNotificationCompleted);
+
+                notifications.add(tempNotification);
+                cursor.moveToNext();
+            }
+            cursor.close();
+            return notifications;
+        } catch (Exception e) {
+            Log.w("getNoCompletedNotification", "Problem z pobraniem notyfikacji z bazy " + e.getMessage());
+            return null;
+        }
+    }
+
     // update information about showing notification (run only from RemindBroadcast for now, when notification is displayed)
-    public void updateNotificationCompleted(String eventName, boolean notificationCompleted, LocalDate eventDate) {
+    public void updateNotificationCompleted(String notificationName, LocalDate notifcationDate, boolean notificationCompleted) {
         try {
             SQLiteDatabase db = this.getWritableDatabase();
-            long eventDateInMillis = eventDate.toDateTimeAtStartOfDay().getMillis();
-            eventName = eventName.replace(" ", "_");
+            notificationName = notificationName.replace(" ", "_");
+            long notificationDate = notifcationDate.toDateTimeAtStartOfDay().getMillis();
             String query;
             if (notificationCompleted) {
                 query = "UPDATE " + "\"" + TABLE_NOTIFICATIONS + "\"" + " SET " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = " + "\"" + 1
-                        + "\"" + " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + eventName + "\""
-                        + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + eventDateInMillis + "\"";
+                        + "\"" + " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\""
+                        + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + notificationDate + "\"";
             } else {
                 query = "UPDATE " + "\"" + TABLE_NOTIFICATIONS + "\"" + " SET " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = " + "\"" + 0
-                        + "\"" + " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + eventName + "\""
-                        + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + eventDateInMillis + "\"";
+                        + "\"" + " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\""
+                        + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + notificationDate + "\"";
             }
             db.execSQL(query);
         } catch (Exception e) {
@@ -658,16 +689,13 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     }
 
     // looking for notification in TABLE_NOTIFICATION
-    public boolean checkNotificationCreatedButNotNotify(String alarmName, LocalDate date, LocalTime time) {
+    public boolean checkNotificationCreatedButNotNotify(Notification notification) {
         try {
-            alarmName = alarmName.replace(" ", "_");
             SQLiteDatabase db = this.getReadableDatabase();
-            long dateInMillis = date.toDateTimeAtStartOfDay().getMillis();
-            long timeInMillis = time.getMillisOfDay();
             String query = "SELECT * FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" +
-                    " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + alarmName + "\""
-                    + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + dateInMillis + "\""
-                    + " AND " + "\"" + NOTIFICATION_TIME + "\"" + " = " + "\"" + timeInMillis + "\""
+                    " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notification.getNotificationName().replace(" ", "_") + "\""
+                    + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + notification.getNotificationDateInMillis() + "\""
+                    + " AND " + "\"" + NOTIFICATION_TIME + "\"" + " = " + "\"" + notification.getNotificationTimeInMillis() + "\""
                     + " AND " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = 0";
             @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
             boolean isCreated;
@@ -688,7 +716,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
     public void deleteNotification(String notificationName) {
         try {
             notificationName = notificationName.replace(" ", "_");
-            SQLiteDatabase db = this.getReadableDatabase();
+            SQLiteDatabase db = this.getWritableDatabase();
             String query = "DELETE FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" +
                     " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\"";
             db.execSQL(query);

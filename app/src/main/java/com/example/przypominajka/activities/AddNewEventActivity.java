@@ -42,6 +42,7 @@ import android.widget.Toast;
 import com.example.przypominajka.models.Event;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
+import com.example.przypominajka.models.Notification;
 import com.example.przypominajka.utils.ReminderBroadcast;
 
 import org.joda.time.DateTime;
@@ -52,6 +53,7 @@ import org.joda.time.format.DateTimeFormat;
 
 import java.util.Calendar;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import yuku.ambilwarna.AmbilWarnaDialog;
 
@@ -617,12 +619,11 @@ public class AddNewEventActivity extends AppCompatActivity {
             }
 
 
-            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
+            time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("UCT"));
             long eventTime = time.getMillisOfDay();
             if (itsMonthInterval) {
                 if (monthDefaultTimeCheckbox.isChecked()) {
                     itsEventDefaultTime = true;
-                    time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
                     eventTime = time.getMillisOfDay();
                 } else {
                     TextView monthTime = findViewById(R.id.textMonthSectionTimeOfEvent);
@@ -630,15 +631,14 @@ public class AddNewEventActivity extends AppCompatActivity {
                         Toast.makeText(context, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
                         return;
                     } else {
-                        time = LocalTime.parse(monthTime.getText().toString(), DateTimeFormat.forPattern("HH:mm"));
-                        time = new LocalTime(time, DateTimeZone.forID("Etc/Universal"));
+                        time = LocalTime.parse(monthTime.getText().toString());
+                        time = new LocalTime(time, DateTimeZone.forID("UCT"));
                         eventTime = time.getMillisOfDay();
                     }
                 }
             } else if (itsCustomTimeInterval) {
                 if (customTimeDefaultTimeCheckbox.isChecked()) {
                     itsEventDefaultTime = true;
-                    time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
                     eventTime = time.getMillisOfDay();
                 } else {
                     TextView customTime = findViewById(R.id.textCustomTimeEventTime);
@@ -646,15 +646,14 @@ public class AddNewEventActivity extends AppCompatActivity {
                         Toast.makeText(context, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
                         return;
                     } else {
-                        time = LocalTime.parse(customTime.getText().toString(), DateTimeFormat.forPattern("HH:mm"));
-                        time = new LocalTime(time, DateTimeZone.forID("Etc/Universal"));
+                        time = LocalTime.parse(customTime.getText().toString());
+                        time = new LocalTime(time, DateTimeZone.forID("UCT"));
                         eventTime = time.getMillisOfDay();
                     }
                 }
             } else if (itsOneTimeEvent) {
                 if (oneTimeDefaultTimeCheckbox.isChecked()) {
                     itsEventDefaultTime = true;
-                    time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
                     eventTime = time.getMillisOfDay();
                 } else {
                     TextView oneTimeTime = findViewById(R.id.textOneTimeTimeOfEvent);
@@ -662,8 +661,8 @@ public class AddNewEventActivity extends AppCompatActivity {
                         Toast.makeText(context, "Nie wybrano godziny", Toast.LENGTH_LONG).show();
                         return;
                     } else {
-                        time = LocalTime.parse(oneTimeTime.getText().toString(), DateTimeFormat.forPattern("HH:mm"));
-                        time = new LocalTime(time, DateTimeZone.forID("Etc/Universal"));
+                        time = LocalTime.parse(oneTimeTime.getText().toString());
+                        time = new LocalTime(time, DateTimeZone.forID(TimeZone.getDefault().getID()));
                         eventTime = time.getMillisOfDay();
                     }
                 }
@@ -693,7 +692,6 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(Void... voids) {
-            dialog.show();
             try {
                 result = przypominajkaDatabaseHelper.insertEvent(newEvent);
             } catch (Exception e) {
@@ -704,52 +702,55 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            dialog.show();
             if (result) {
                 // if event insert was successful set first alarm for nearest date
                 DateTime tempEventTime;
-                if (itsEventDefaultTime) {
-                    LocalTime defaultTime = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("Etc/Universal"));
-                    tempEventTime = new DateTime(startDateLocalData.getYear(), startDateLocalData.getMonthOfYear(),
-                            startDateLocalData.getDayOfMonth(), defaultTime.getHourOfDay(), defaultTime.getMinuteOfHour());
-                } else {
-                    tempEventTime = new DateTime(startDateLocalData.getYear(), startDateLocalData.getMonthOfYear(),
-                            startDateLocalData.getDayOfMonth(), time.getHourOfDay(), time.getMinuteOfHour());
-                }
+
+                tempEventTime = new DateTime(startDateLocalData.getYear(), startDateLocalData.getMonthOfYear(),
+                        startDateLocalData.getDayOfMonth(), time.getHourOfDay(), time.getMinuteOfHour())
+                        .withZoneRetainFields(DateTimeZone.forID(TimeZone.getDefault().getID()));
 
                 if (tempEventTime.getMillis() < DateTime.now().getMillis()) {
                     tempEventTime = tempEventTime.plusDays(1);
                 }
+                Log.d("AddNewActivity", tempEventTime.toString());
 
                 AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                 PendingIntent alarmIntent;
 
                 // Event ID from table is a unique ID for Intent and Pending Intent, two event cannot have this same ID
                 // so this value is perfect for this
-                int eventID = przypominajkaDatabaseHelper.getEventId(eventNameField.getText().toString());
+                int year = tempEventTime.getYear();
+                String yearShortString = Integer.toString(year).substring(2);
+                int yearShort = Integer.parseInt(yearShortString);
+
+                int eventID = przypominajkaDatabaseHelper.getEventId(newEvent.getEventName());
+                int notifyAndPendingIntentID;
                 if (eventID != -1) {
+                    notifyAndPendingIntentID = Integer.parseInt(String.valueOf(eventID) +
+                            String.valueOf(tempEventTime.getDayOfYear()) + String.valueOf(yearShort));
                     Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
                     notificationIntent.putExtra("NOTIFY_TEXT", eventNameField.getText().toString());
-                    notificationIntent.putExtra("ID", eventID);
+                    notificationIntent.putExtra("ID", notifyAndPendingIntentID);
 
                     alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                            eventID,
+                            notifyAndPendingIntentID,
                             notificationIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
                 } else {
                     Log.d("AddNewEvent", "Problem z pobraniem ID wydarzenia z bazy");
                     return;
                 }
-
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
                 przypominajkaDatabaseHelper.updateNotificationCreatedColumn(eventNameField.getText().toString(), true,
                         new LocalDate(tempEventTime.getYear(), tempEventTime.getMonthOfYear(), tempEventTime.getDayOfMonth()));
 
                 Log.d("AddNewEvent", "Stworzono powiadomienie dla " + eventNameField.getText().toString() + " o godzinie " + tempEventTime.toString());
 
-                boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(eventNameField.getText().toString(),
-                        new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()),
-                        tempEventTime.toLocalDate(), false);
+                Notification newNotification = new Notification(eventNameField.getText().toString(), notifyAndPendingIntentID,
+                        new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()), tempEventTime.toLocalDate(), false);
+                boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(newNotification);
+
                 if (insertNotify) {
                     Log.d("AddNewEvent", "Dodano powiadomienie dla " + eventNameField.getText().toString() + " " + tempEventTime.toLocalDate().toString()
                             + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());

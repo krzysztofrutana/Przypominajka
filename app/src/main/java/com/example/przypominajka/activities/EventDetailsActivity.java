@@ -8,7 +8,9 @@ import androidx.core.graphics.drawable.DrawableCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
@@ -24,12 +26,16 @@ import android.widget.Toast;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
 import com.example.przypominajka.models.Event;
+import com.example.przypominajka.models.Notification;
 import com.example.przypominajka.utils.ReminderBroadcast;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
+
+import java.util.List;
+import java.util.TimeZone;
 
 
 public class EventDetailsActivity extends AppCompatActivity {
@@ -115,21 +121,27 @@ public class EventDetailsActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.delete_event:
                 // deleting event
-                int eventID = przypominajkaDatabaseHelper.getEventId(eventName);
+                // TODO , i don't know why, but this dont work correctly, notify still is being send to BroadcastReceiver class
+                List<Notification> notificationList = przypominajkaDatabaseHelper.getNoCompletedNotification(eventName);
                 boolean deleteEvent = przypominajkaDatabaseHelper.deleteEvent(eventName);
                 przypominajkaDatabaseHelper.deleteNotification(eventName);
+                for (Notification notification : notificationList) {
 
-                Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
-                notificationIntent.putExtra("NOTIFY_TEXT", eventName);
-                notificationIntent.putExtra("ID", eventID);
+                    Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+                    notificationIntent.putExtra("NOTIFY_TEXT", eventName);
+                    notificationIntent.putExtra("ID", notification.getNotificationID());
 
-                PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                        eventID,
-                        notificationIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+                    PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                            notification.getNotificationID(),
+                            notificationIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
 
-                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                alarmManager.cancel(alarmIntent);
+                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                    alarmManager.cancel(alarmIntent);
+
+                    NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                    manager.cancel(notification.getNotificationID());
+                }
 
                 if (deleteEvent) {
                     Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
@@ -285,8 +297,8 @@ public class EventDetailsActivity extends AppCompatActivity {
             eventTypeViewPart1.setText("Jednorazowo");
             eventTypeViewPart2.setText(new LocalDate(oneTimeEventDate).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
         }
-        eventTimeView.setText(new LocalTime(eventTime, DateTimeZone.forID("Etc/Universal")).toString(DateTimeFormat.forPattern("HH:mm")));
-        startDateView.setText(new LocalDate(startDate, DateTimeZone.forID("Etc/Universal")).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
+        eventTimeView.setText(new LocalTime(eventTime, DateTimeZone.forID("UTC")).toString(DateTimeFormat.forPattern("HH:mm")));
+        startDateView.setText(new LocalDate(startDate).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
 
 
     }
