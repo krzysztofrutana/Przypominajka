@@ -120,6 +120,7 @@ The window on the left allows you to view all saved events. After clicking on th
 <!--Plan for the future -->
 ## Plan for the future
 * For now only testing. In future maybe confirmation of doing something in current day, if not move event on other date.
+* Change to MVVM model and Room Database
 
 <!-- GETTING STARTED -->
 ## Getting Started
