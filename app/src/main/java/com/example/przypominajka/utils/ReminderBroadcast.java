@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat;
 import com.example.przypominajka.R;
 import com.example.przypominajka.activities.MainActivity;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+import com.example.przypominajka.viewModels.NotificationViewModel;
 
 import org.joda.time.LocalDate;
 
@@ -23,11 +24,11 @@ public class ReminderBroadcast extends BroadcastReceiver {
     final String ID = "notifyPrzypominajka";
     final String channelName = "PrzypominajkaChannel";
     int notifyID = 0;
-    PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper;
+    private NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(context);
 
         String text = intent.getStringExtra("NOTIFY_TEXT");
         notifyID = intent.getIntExtra("ID", 100);
@@ -42,15 +43,26 @@ public class ReminderBroadcast extends BroadcastReceiver {
                 (notifyID - (2 * notifyID)) - 1000, intentMainActivity,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
+        String title;
+        if (intent.getIntExtra("MANY", 1) == 1) {
+            title = "Zbliżające się wydarzenie";
+        } else {
+            title = "Zbliżające się wydarzenia";
+        }
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, ID)
                 .setSmallIcon(R.drawable.ic_baseline_alarm_24)
-                .setContentTitle("Zbliżające się wydarzenia")
+                .setContentTitle(title)
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
-        przypominajkaDatabaseHelper.updateNotificationCompleted(text, LocalDate.now(), true);
+        int result = notificationViewModel.updateNotificationCompleted(text, LocalDate.now().toDateTimeAtStartOfDay().getMillis(), true);
+        if (result > 0) {
+            Log.d("RemindBroadcast", "Informacja w wydarzeniu " + text + " zaktualizowana");
+        } else {
+            Log.d("RemindBroadcast", "Nie udało się zaktualizować kolumny o notyfikacji w wydarzeniu " + text);
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);

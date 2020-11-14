@@ -16,19 +16,26 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.Observer;
 
+import android.util.Log;
 import android.view.MenuItem;
 
 
 import com.example.przypominajka.R;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+import com.example.przypominajka.databases.entities.SettingsModel;
 import com.example.przypominajka.fragments.calendar.CalendarFragment;
 import com.example.przypominajka.fragments.events.EventsFragment;
 import com.example.przypominajka.fragments.settings.SettingFragment;
 import com.example.przypominajka.services.SetAlarmService;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
+import com.example.przypominajka.viewModels.SettingsViewModel;
 import com.google.android.material.navigation.NavigationView;
 
 import android.app.job.JobInfo;
+
+import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -39,7 +46,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private int _id = 123;
 
-    private final PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(this);
+    private SettingsViewModel settingsViewModel;
+    private long defaultIntervalTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,16 +70,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         navigationView.setCheckedItem(R.id.nav_calendar);
 
+        settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
         // making job schediler to run job service in custom interval time
-        ComponentName componentName = new ComponentName(this, SetAlarmService.class);
-        JobInfo jobInfo = new JobInfo.Builder(_id, componentName)
-                .setPeriodic(przypominajkaDatabaseHelper.getCheckEventInterval())
-                .build();
+        final ComponentName componentName = new ComponentName(this, SetAlarmService.class);
+        long checkIntervalTime = settingsViewModel.getCheckEventInterval();
+        if (checkIntervalTime == 0) {
+            long result = settingsViewModel.insertSettings(new SettingsModel(28800000, 900000));
+            if (result != -1) {
+                Log.d("MainActivity onCreate", "Dodawanie domyślnych ustawień udane");
+            } else {
+                Log.d("MainActivity onCreate", "Dodawanie domyślnych ustawień nieudane");
+            }
+        } else {
 
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+            JobInfo jobInfo = new JobInfo.Builder(_id, componentName)
+                    .setPeriodic(checkIntervalTime)
+                    .build();
+            JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+            jobScheduler.schedule(jobInfo);
 
-        jobScheduler.schedule(jobInfo);
-
+        }
     }
 
     // Necessary to close menu if is open when back button is pressed

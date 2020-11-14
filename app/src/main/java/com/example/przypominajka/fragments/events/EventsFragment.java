@@ -7,46 +7,46 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.Toast;
 
 import com.example.przypominajka.activities.AddNewEventActivity;
-import com.example.przypominajka.models.Event;
-import com.example.przypominajka.activities.EventDetailsActivity;
-import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+
 import com.example.przypominajka.R;
-import com.example.przypominajka.adapters.EventsListColorAdapter;
+import com.example.przypominajka.adapters.EventListAdapter;
+import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.viewModels.EventsViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.ArrayList;
 import java.util.List;
+
 
 public class EventsFragment extends Fragment {
 
-    PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper;
     Context context;
 
     FloatingActionButton fab;
 
     View v;
 
-    ListView eventList;
-    ArrayList<Event> eventArray = new ArrayList<Event>();
-    EventsListColorAdapter adapter;
+    EventListAdapter adapter;
+    RecyclerView recyclerViewListOfEvents;
+
+    EventsViewModel taskListViewModel;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
-
+        taskListViewModel = new ViewModelProvider(this).get(EventsViewModel.class);
         View v = inflater.inflate(R.layout.fragment_events, container, false);
         fab = (FloatingActionButton) v.findViewById(R.id.floating_action_button);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -65,7 +65,6 @@ public class EventsFragment extends Fragment {
     public void onAttach(Context cont) {
         super.onAttach(context);
         context = cont;
-        przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(context);
     }
 
     @Override
@@ -73,58 +72,48 @@ public class EventsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         v = view;
 
-        eventList = view.findViewById(R.id.allEventList);
-
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                showAllEventList();
-            }
-        });
+        recyclerViewListOfEvents = view.findViewById(R.id.allEventList);
+        RecyclerView.LayoutManager recycelLayoutManager = new
+                LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        recyclerViewListOfEvents.setLayoutManager(recycelLayoutManager);
+        adapter = new EventListAdapter(context);
+        recyclerViewListOfEvents.setAdapter(adapter);
+        showAllEventList();
     }
 
     @Override
     public void onResume() {
 
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                showAllEventList();
-            }
-        });
+        showAllEventList();
         super.onResume();
     }
 
 
     public void showAllEventList() {
 
-        List<Event> events = przypominajkaDatabaseHelper.getAllEvent();
-        if (events == null) {
-            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
-            Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
-            return;
-        }
-        eventArray.clear();
-        if (events.size() > 0) {
+        taskListViewModel.getAllEvents()
+                .observe(getViewLifecycleOwner(), new Observer<List<EventModel>>() {
+                    @Override
+                    public void onChanged(List<EventModel> eventModels) {
+                        adapter.setList(eventModels);
+                    }
+                });
 
-            eventArray.addAll(events);
-            adapter = new EventsListColorAdapter(context, R.layout.row_list, eventArray);
-            eventList.setAdapter(adapter);
-            eventList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent eventDetail = new Intent(context.getApplicationContext(), EventDetailsActivity.class);
-
-                    EventsListColorAdapter customAdapter = (EventsListColorAdapter) parent.getAdapter();
-                    Event event = customAdapter.getItem(position);
-
-                    assert event != null;
-                    eventDetail.putExtra("EVENT_NAME", event.getEventName());
-                    startActivity(eventDetail);
-                }
-            });
-        } else {
-            adapter = new EventsListColorAdapter(context, R.layout.row_list, eventArray);
-            eventList.setAdapter(adapter);
-        }
+//        List<Eve> events = przypominajkaDatabaseHelper.getAllEvent();
+//        if (events == null) {
+//            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
+//            Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
+//            return;
+//        }
+//        eventArray.clear();
+//        if (events.size() > 0) {
+//
+//            eventArray.addAll(events);
+//            adapter = new EventListAdapter(context, eventArray);
+//            eventList.setAdapter(adapter);
+//        } else {
+//            adapter = new EventsListColorAdapter(context, R.layout.row_list, eventArray);
+//            eventList.setAdapter(adapter);
+//        }
     }
 }

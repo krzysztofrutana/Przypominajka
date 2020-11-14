@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,8 @@ import android.widget.TimePicker;
 import com.example.przypominajka.R;
 import com.example.przypominajka.activities.AddNewEventActivity;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
+import com.example.przypominajka.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -48,6 +51,8 @@ public class SettingFragment extends Fragment {
     TimePickerDialog timePickerDefaultTime;
     TimePickerDialog timePickerCheckInterval;
 
+    private SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -57,12 +62,11 @@ public class SettingFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         this.view = view;
-        przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(requireContext());
         defaultTimeField = view.findViewById(R.id.textSettingsDefaultTime);
-        if (przypominajkaDatabaseHelper.getDefaultTime() == 0) {
+        if (settingsViewModel.getDefaultTime() == 0) {
             defaultTimeField.setText("wybierz godzinę");
         } else {
-            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("UCT"));
+            LocalTime time = new LocalTime(settingsViewModel.getDefaultTime(), DateTimeZone.forID("UCT"));
             defaultTimeField.setText(time.toString(DateTimeFormat.forPattern("HH:mm")));
         }
         defaultTimeField.setOnClickListener(new View.OnClickListener() {
@@ -86,7 +90,12 @@ public class SettingFragment extends Fragment {
                         defaultTimeField.setText(time);
                         defaultTimeField.setTextSize(18);
                         LocalTime date = new LocalTime(selectedHour, selectedMinute);
-                        przypominajkaDatabaseHelper.updateDefaultTimeInSettings(date.getMillisOfDay());
+                        int result = settingsViewModel.updateDefaultTime(date.getMillisOfDay());
+                        if (result > 0) {
+                            Log.d("SettingFragment onClick Default Time", "Aktualizacja domyślnego czasu udana");
+                        } else {
+                            Log.d("SettingFragment onClick Default Time", "Aktualizacja domyślnego czasu nieudana");
+                        }
                     }
                 }, hour, minute, DateFormat.is24HourFormat(requireContext()));//Yes 24 hour time
                 timePickerDefaultTime.setTitle("Wybierz godzinę");
@@ -95,10 +104,10 @@ public class SettingFragment extends Fragment {
         });
 
         eventRefreshIntervalField = view.findViewById(R.id.textCheckEventInerval);
-        if (przypominajkaDatabaseHelper.getCheckEventInterval() == 0) {
+        if (settingsViewModel.getCheckEventInterval() == 0) {
             eventRefreshIntervalField.setText("wybierz czas");
         } else {
-            LocalTime time = new LocalTime(przypominajkaDatabaseHelper.getCheckEventInterval(), DateTimeZone.forID("UCT"));
+            LocalTime time = new LocalTime(settingsViewModel.getCheckEventInterval(), DateTimeZone.forID("UCT"));
             eventRefreshIntervalField.setText(time.toString(DateTimeFormat.forPattern("HH:mm")));
         }
         eventRefreshIntervalField.setOnClickListener(new View.OnClickListener() {
@@ -122,7 +131,12 @@ public class SettingFragment extends Fragment {
                         eventRefreshIntervalField.setText(time);
                         eventRefreshIntervalField.setTextSize(18);
                         LocalTime date = new LocalTime(selectedHour, selectedMinute);
-                        przypominajkaDatabaseHelper.updateCheckEventInterval(date.getMillisOfDay());
+                        int result = settingsViewModel.updateCheckEventInterval(date.getMillisOfDay());
+                        if (result > 0) {
+                            Log.d("SettingFragment onClick Interval Time", "Aktualizacja domyślnego czasu udana");
+                        } else {
+                            Log.d("SettingFragment onClick Interval Time", "Aktualizacja domyślnego czasu nieudana");
+                        }
                     }
                 }, hour, minute, true);
                 timePickerCheckInterval.setTitle("Wybierz czas");

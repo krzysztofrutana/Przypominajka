@@ -15,38 +15,46 @@
         android:id="@+id/linearLayout1">
 
         <include
+            android:id="@+id/include4"
             layout="@layout/calendar_view"
-            android:layout_width="match_parent"
 
-            android:layout_height="wrap_content" />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:minWidth="25dp"
-            android:minHeight="25dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/linearLayout2">
+            app:layout_constraintVertical_weight="1" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minWidth="25dp"
+            android:minHeight="25dp"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/include4"
+            tools:layout_editor_absoluteX="-16dp"
+            app:layout_constraintHorizontal_weight="1">
 
             <TextView
-                android:text="Lista zdarzeń na dziś:"
-                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/textViewListLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:id="@+id/textViewListLabel"
                 android:paddingStart="16dp"
                 android:paddingLeft="16dp"
+                android:text="Lista zdarzeń na dziś:"
+                android:textAppearance="?android:attr/textAppearanceLarge"
                 tools:ignore="RtlSymmetry" />
         </LinearLayout>
 
         <LinearLayout
-            android:orientation="horizontal"
-            android:minWidth="25dp"
-            android:minHeight="25dp"
+            android:id="@+id/linearLayoutIfTodayNothing"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/linearLayoutIfTodayNothing"
-            android:paddingTop="20sp">
+            android:minWidth="25dp"
+            android:minHeight="25dp"
+            android:orientation="horizontal"
+            android:paddingTop="20sp"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
+            tools:layout_editor_absoluteX="16dp"
+            app:layout_constraintVertical_weight="1">
 
             <TextView
                 android:id="@+id/textViewTodayNothing"
@@ -61,11 +69,13 @@
                 tools:ignore="RtlSymmetry" />
         </LinearLayout>
 
-        <ListView
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/eventList"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/eventList" />
-
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayoutIfTodayNothing"
+            app:layout_constrainedHeight="true"
+            android:layout_weight="1" />
 
     </LinearLayout>
 

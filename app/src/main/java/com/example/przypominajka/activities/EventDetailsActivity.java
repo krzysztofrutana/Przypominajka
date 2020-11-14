@@ -12,7 +12,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,14 +19,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
-import com.example.przypominajka.models.Event;
-import com.example.przypominajka.models.Notification;
+import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.utils.ReminderBroadcast;
+import com.example.przypominajka.viewModels.EventsViewModel;
+import com.example.przypominajka.viewModels.NotificationViewModel;
+import com.example.przypominajka.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -35,36 +38,13 @@ import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 
 import java.util.List;
-import java.util.TimeZone;
 
 
 public class EventDetailsActivity extends AppCompatActivity {
 
-    PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper;
-
     String eventName;
 
-    private String eventDiscription;
-    private int eventColor;
-
-    private boolean monthInterval;
-    private int monthNumberOfRepeats;
-
-    private boolean shortTimeInterval;
-    private int shortTimeType; // type (0 - none, 1 - day,2 - week,3 - month)
-    private boolean shortTimeRepeatAllTime;
-    private int shortTimeNumberOfRepeats;
-
-    private boolean oneTimeEvent;
-    private long oneTimeEventDate;
-
-    private long eventTime;
-
-    private int timeIntervalOfRepeat;
-    private long startDate;
-
-    private long alarmSet;
-
+    EventModel event = new EventModel();
     TextView eventNameView;
     TextView eventDiscriptionView;
     Button colorButtonView;
@@ -73,7 +53,10 @@ public class EventDetailsActivity extends AppCompatActivity {
     TextView eventTypeViewPart3;
     TextView eventTimeView;
     TextView startDateView;
-    TextView alarmSetView;
+
+    private NotificationViewModel notificationViewModel = new NotificationViewModel(getApplication());
+    private EventsViewModel eventsViewModel = new EventsViewModel(getApplication());
+    private SettingsViewModel settingsViewModel = new SettingsViewModel(getApplication());
 
 
     @Override
@@ -92,7 +75,6 @@ public class EventDetailsActivity extends AppCompatActivity {
         eventName = getIntent().getStringExtra("EVENT_NAME");
 
         // set everything necessary views
-        przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(this);
         eventNameView = findViewById(R.id.eventNameDetails);
         eventDiscriptionView = findViewById(R.id.eventDiscriptionDetails);
         colorButtonView = findViewById(R.id.buttonColorDetails);
@@ -121,35 +103,42 @@ public class EventDetailsActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.delete_event:
                 // deleting event
-                // TODO , i don't know why, but this dont work correctly, notify still is being send to BroadcastReceiver class
-                List<Notification> notificationList = przypominajkaDatabaseHelper.getNoCompletedNotification(eventName);
-                boolean deleteEvent = przypominajkaDatabaseHelper.deleteEvent(eventName);
-                przypominajkaDatabaseHelper.deleteNotification(eventName);
-                for (Notification notification : notificationList) {
+                // TODO , i don't know why, but this dont work correctly, notify still is being send to BroadcastReceiver class\
+                try {
+                    List<NotificationModel> notificationList = notificationViewModel.getNoCompletedNotification(eventName).getValue();
+                    int result = eventsViewModel.deleteEvent(eventsViewModel.findByEventName(eventName));
+                    if (result > 0) {
+                        for (NotificationModel notification : notificationList) {
+                            int resultDelete = notificationViewModel.delete(notification);
+                            if (resultDelete > 0) {
+                                Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+                                notificationIntent.putExtra("NOTIFY_TEXT", eventName);
+                                notificationIntent.putExtra("ID", notification.getNotificationID());
 
-                    Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
-                    notificationIntent.putExtra("NOTIFY_TEXT", eventName);
-                    notificationIntent.putExtra("ID", notification.getNotificationID());
+                                PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                                        notification.getNotificationID(),
+                                        notificationIntent,
+                                        PendingIntent.FLAG_UPDATE_CURRENT);
 
-                    PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                            notification.getNotificationID(),
-                            notificationIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
+                                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                alarmManager.cancel(alarmIntent);
 
-                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                    alarmManager.cancel(alarmIntent);
-
-                    NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                    manager.cancel(notification.getNotificationID());
-                }
-
-                if (deleteEvent) {
-                    Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
-                    this.finish();
-                    return true;
-                } else {
+                                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                                manager.cancel(notification.getNotificationID());
+                            }
+                        }
+                        Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
+                        this.finish();
+                        return true;
+                    } else {
+                        Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
+                        Log.w("Delete_event", "Problem przy usuwanie zdarzenia");
+                        return false;
+                    }
+                } catch (Exception e) {
                     Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
-                    return true;
+                    Log.w("Delete_event", "Problem przy usuwanie zdarzenia " + e.getMessage());
+                    return false;
                 }
                 // back button on toolbar action
             case android.R.id.home:
@@ -164,168 +153,152 @@ public class EventDetailsActivity extends AppCompatActivity {
     private void setInformationAboutEvent() {
 
         eventNameView.setText(eventName.replaceAll("_", " "));
-        if (eventDiscription.length() == 0) {
+        if (event.getEventDiscription().length() == 0) {
             eventDiscriptionView.setText("Brak");
         } else {
-            eventDiscriptionView.setText(eventDiscription);
+            eventDiscriptionView.setText(event.getEventDiscription());
         }
         Drawable unwrappedDrawable = AppCompatResources.getDrawable(EventDetailsActivity.this, R.drawable.button_corner_radius);
         Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
-        DrawableCompat.setTint(wrappedDrawable, eventColor);
+        DrawableCompat.setTint(wrappedDrawable, event.getEventColor());
         colorButtonView.setBackground(wrappedDrawable);
-        if (monthInterval) {
-            String eventTypeMonthIntervalPart1 = "Przypominaj " + timeIntervalOfRepeat;
+        if (event.getItsMonthInterval()) {
+            String eventTypeMonthIntervalPart1 = "Przypominaj " + event.getTimeInterval();
             String eventTypeMonthIntervalPart2 = " dnia miesiąca";
             String eventTypeMonthIntervalPart3;
-            if (monthNumberOfRepeats == 1) {
+            if (event.getMonthNumberOfRepeats() == 1) {
                 eventTypeMonthIntervalPart3 = "jeden raz";
-            } else if (monthNumberOfRepeats >= 2 && monthNumberOfRepeats <= 4) {
-                eventTypeMonthIntervalPart3 = "przez " + monthNumberOfRepeats + " miesiące";
+            } else if (event.getMonthNumberOfRepeats() >= 2 && event.getMonthNumberOfRepeats() <= 4) {
+                eventTypeMonthIntervalPart3 = "przez " + event.getMonthNumberOfRepeats() + " miesiące";
             } else {
-                eventTypeMonthIntervalPart3 = "przez " + monthNumberOfRepeats + " miesięcy";
+                eventTypeMonthIntervalPart3 = "przez " + event.getMonthNumberOfRepeats() + " miesięcy";
             }
 
             eventTypeViewPart1.setText(eventTypeMonthIntervalPart1);
             eventTypeViewPart2.setText(eventTypeMonthIntervalPart2);
             eventTypeViewPart3.setText(eventTypeMonthIntervalPart3);
-        } else if (shortTimeInterval) {
+        } else if (event.getItCustomTimeInterval()) {
             String eventTypeShortInterval = "";
-            if (shortTimeRepeatAllTime) {
+            if (event.getItsCustomTimeRepeatsAllTime()) {
                 eventTypeViewPart1.setText("Przypominaj zawsze co");
             } else {
                 eventTypeViewPart1.setText("Przypominaj co");
             }
-            if (shortTimeType == 1) {
-                if (timeIntervalOfRepeat == 1) {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " dzień";
+            if (event.getCustomTimeType() == 1) {
+                if (event.getTimeInterval() == 1) {
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " dzień";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " dzień";
+                        eventTypeShortInterval = event.getTimeInterval() + " dzień";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
 
 
                 } else {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " dni";
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " dni";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " dni";
+                        eventTypeShortInterval = event.getTimeInterval() + " dni";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
 
                 }
-            } else if (shortTimeType == 2) {
-                if (timeIntervalOfRepeat == 1) {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " tydzień";
+            } else if (event.getCustomTimeType() == 2) {
+                if (event.getTimeInterval() == 1) {
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " tydzień";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " tydzień";
+                        eventTypeShortInterval = event.getTimeInterval() + " tydzień";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
-                } else if (timeIntervalOfRepeat >= 2 && timeIntervalOfRepeat <= 4) {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " tygodnie";
+                } else if (event.getTimeInterval() >= 2 && event.getTimeInterval() <= 4) {
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " tygodnie";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " tygodnie";
+                        eventTypeShortInterval = event.getTimeInterval() + " tygodnie";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
                 } else {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " tygodnii";
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " tygodnii";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " tygodnii";
+                        eventTypeShortInterval = event.getTimeInterval() + " tygodnii";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
                 }
-            } else if (shortTimeType == 3) {
-                if (timeIntervalOfRepeat == 1) {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " miesiąc";
+            } else if (event.getCustomTimeType() == 3) {
+                if (event.getTimeInterval() == 1) {
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " miesiąc";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " miesiąc";
+                        eventTypeShortInterval = event.getTimeInterval() + " miesiąc";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
-                } else if (timeIntervalOfRepeat >= 2 && timeIntervalOfRepeat <= 4) {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " miesiące";
+                } else if (event.getTimeInterval() >= 2 && event.getTimeInterval() <= 4) {
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " miesiące";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " miesiące";
+                        eventTypeShortInterval = event.getTimeInterval() + " miesiące";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
                 } else {
-                    if (shortTimeRepeatAllTime) {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " miesięcy";
+                    if (event.getItsCustomTimeRepeatsAllTime()) {
+                        eventTypeShortInterval = event.getTimeInterval() + " miesięcy";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
                         eventTypeViewPart3.setVisibility(LinearLayout.GONE);
                     } else {
-                        eventTypeShortInterval = timeIntervalOfRepeat + " miesięcy";
+                        eventTypeShortInterval = event.getTimeInterval() + " miesięcy";
                         eventTypeViewPart2.setText(eventTypeShortInterval);
-                        String eventTypeShortIntervalPart3 = shortTimeNumberOfRepeats + " razy";
+                        String eventTypeShortIntervalPart3 = event.getCustomTimeNumberOfRepeats() + " razy";
                         eventTypeViewPart3.setText(eventTypeShortIntervalPart3);
                     }
                 }
             }
-        } else if (oneTimeEvent) {
+        } else if (event.getItsOneTimeEvent()) {
             eventTypeViewPart1.setText("Jednorazowo");
-            eventTypeViewPart2.setText(new LocalDate(oneTimeEventDate).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
+            eventTypeViewPart2.setText(event.getOneTimeEventDate().toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
         }
-        eventTimeView.setText(new LocalTime(eventTime, DateTimeZone.forID("UTC")).toString(DateTimeFormat.forPattern("HH:mm")));
-        startDateView.setText(new LocalDate(startDate).toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
-
+        eventTimeView.setText(event.getEventTime().toString(DateTimeFormat.forPattern("HH:mm")));
+        startDateView.setText(event.getStartDate().toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
 
     }
 
     // prepare information about event
     @SuppressLint({"ShowToast"})
     private void getInformationAboutEvent() {
-        Event event = przypominajkaDatabaseHelper.getEvent(eventName);
+        EventModel event = eventsViewModel.findByEventName(eventName);
         if (event == null) {
             Toast.makeText(this, "Nie udało się uzyskać informacji o zdarzeniu", Toast.LENGTH_LONG);
-        }
-        eventDiscription = event.getEventDiscription();
-        eventColor = event.getEventColor();
-        monthInterval = event.getItsMonthInterval();
-        monthNumberOfRepeats = event.getMonthNumberOfRepeats();
-        shortTimeInterval = event.getItCustomTimeInterval();
-        shortTimeType = event.getCustomTimeType();
-        shortTimeRepeatAllTime = event.getItsCustomTimeRepeatsAllTime();
-        shortTimeNumberOfRepeats = event.getCustomTimeNumberOfRepeats();
-        oneTimeEvent = event.getItsOneTimeEvent();
-        oneTimeEventDate = event.getOneTimeEventDateInMillis();
-        timeIntervalOfRepeat = event.getTimeInterval();
-        if (event.getEventTimeDefault()) {
-            eventTime = przypominajkaDatabaseHelper.getDefaultTime();
         } else {
-            eventTime = event.getEventTimeInMillis();
+            this.event = event;
         }
-        startDate = event.getStartDateInMillis();
     }
 }

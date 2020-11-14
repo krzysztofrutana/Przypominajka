@@ -1,17 +1,27 @@
 package com.example.przypominajka.databases;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.content.Context;
+import android.net.CaptivePortal;
+import android.util.EventLog;
 import android.util.Log;
 
-import com.example.przypominajka.models.Event;
-import com.example.przypominajka.models.Notification;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.Transformations;
+import androidx.room.OnConflictStrategy;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import org.joda.time.DateTime;
+import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.databases.entities.EventsTimeTemplateModel;
+import com.example.przypominajka.databases.repositories.EventsRepository;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
+import com.example.przypominajka.viewModels.EventsViewModel;
+import com.example.przypominajka.viewModels.SettingsViewModel;
+
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
@@ -20,189 +30,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 
-public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
+//only the methods left in this class that handle manually created tables containing the days of the event
+public class PrzypominajkaDatabaseHelper {
 
-    private static final String DB_NAME = "przypominajka";
-
-
-    private static final String TABLE_EVENTS = "EVENTS"; // main table name
-
-    private static final String EVENT_NAME = "EVENT_NAME"; // strings
-    private static final String EVENT_DISCRIPTION = "EVENT_DISCRIPTION"; // strings
-
-    private static final String EVENT_COLOR = "EVENT_COLOR";//int
-
-    private static final String MONTH_INTERVAL = "MONTH_INTERVAL"; // boolean
-    private static final String MONTH_NUMBER_OF_REPEATS = "MONTH_NUMBER_OF_REPEATS"; // int
-
-    private static final String SHORT_TIME_INTERVAL = "SHORT_TIME_INTERVAL"; // boolean
-    private static final String SHORT_TIME_TYPE = "SHORT_TIME_TYPE"; // type (0 - none, 1 - day,2 - week,3 - month)
-    private static final String SHORT_TIME_REPEATS_ALL_TIME = "SHORT_TIME_REPEATS_ALL_TIME";// boolean
-    private static final String SHORT_TIME_NUMBER_OF_REPEATS = "SHORT_TIME_NUMBER_OF_REPEATS"; // int
-    private static final String ONE_TIME = "ONE_TIME"; // boolean
-    private static final String ONE_TIME_DATE = "ONE_TIME_DATE"; // date
-    private static final String TIME_INTERVAL = "TIME_INTERVAL"; // int
-    private static final String START_DATE = "START_DATE"; // date
-    private static final String EVENT_TIME_DEFAULT = "EVENT_TIME_DEFAULT";
-    private static final String EVENT_TIME = "EVENT_TIME";
-
-    private static final String TABLE_SETTINGS = "SETTINGS";
-    private static final String DEFAULT_TIME = "DEFAULT_TIME";
-    private static final String NOTIFY_CHECK_INTERVAL = "NOTIFY_CHECK_INTERVAL";
-
-    private static final String TABLE_NOTIFICATIONS = "NOTIFICATIONS";
-    private static final String NOTIFICATION_EVENT_NAME = "NOTIFICATION_EVENT_NAME";
-    private static final String NOTIFICATION_ID = "NOTIFICATION_ID";
-    private static final String NOTIFICATION_DATE = "NOTIFICATION_DATE";
-    private static final String NOTIFICATION_TIME = "NOTIFICATION_TIME";
-    private static final String NOTIFICATION_COMPLETED = "NOTIFICATION_COMPLETED";
-
-
-    private static final int DB_VERSION = 6;
-
-    Context context;
-
-    public PrzypominajkaDatabaseHelper(Context context) {
-        super(context, DB_NAME, null, DB_VERSION);
-        this.context = context;
-    }
-
-    @Override
-    public void onCreate(SQLiteDatabase db) {
+    public static boolean insertEvent(EventModel eventModel) {
+        SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
         try {
-            String queryEventTable = "CREATE TABLE " + TABLE_EVENTS + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + EVENT_NAME + " TEXT, "
-                    + EVENT_DISCRIPTION + " TEXT, "
-                    + EVENT_COLOR + " INTEGER, "
-                    + MONTH_INTERVAL + " INTEGER DEFAULT 0, "
-                    + MONTH_NUMBER_OF_REPEATS + " INTEGER DEFAULT 0, "
-                    + SHORT_TIME_INTERVAL + " INTEGER DEFAULT 0, "
-                    + SHORT_TIME_TYPE + " INTEGER DEFAULT 0, "
-                    + SHORT_TIME_REPEATS_ALL_TIME + " INTEGER DEFAULT 0, "
-                    + SHORT_TIME_NUMBER_OF_REPEATS + " INTEGER DEFAULT 0, "
-                    + ONE_TIME + " INTEGER DEFAULT 0, "
-                    + ONE_TIME_DATE + " REAL DEFAULT 0, "
-                    + TIME_INTERVAL + " INTEGER DEFAULT 0, "
-                    + EVENT_TIME_DEFAULT + " INTEGER DEFAULT 0, "
-                    + EVENT_TIME + " REAL DEFAULT 0, "
-                    + START_DATE + " REAL DEFAULT 0);";
-            db.execSQL(queryEventTable);
-
-            String queryCreateSettingTable = "CREATE TABLE " + TABLE_SETTINGS + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + DEFAULT_TIME + " REAL DEFAULT 0, "
-                    + NOTIFY_CHECK_INTERVAL + " REAL DEFAULT 0);";
-            db.execSQL(queryCreateSettingTable);
-
-            LocalTime defaultTime = new LocalTime(28800000, DateTimeZone.forID("UCT"));
-            long defaultTimeInMillis = defaultTime.getMillisOfDay();
-
-            LocalTime intervalTime = new LocalTime(900000, DateTimeZone.forID("UCT"));
-            long intervalTimeInMillis = intervalTime.getMillisOfDay();
-
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(DEFAULT_TIME, defaultTimeInMillis);
-            contentValues.put(NOTIFY_CHECK_INTERVAL, intervalTimeInMillis);
-
-            long result = db.insert(TABLE_SETTINGS, null, contentValues);
-            if (result == -1) {
-                Log.d("SQLite onCreate", "Problem z utworzeniem tabeli ustawień");
-            } else {
-                Log.d("SQLite onCreate", "Tabela ustawień utworzona");
-            }
-
-            String queryNotificationTable = "CREATE TABLE " + TABLE_NOTIFICATIONS + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + NOTIFICATION_EVENT_NAME + " TEXT, "
-                    + NOTIFICATION_ID + " INTEGER DEFAULT 0, "
-                    + NOTIFICATION_DATE + " REAL DEFAULT 0, "
-                    + NOTIFICATION_TIME + " REAL DEFAULT 0, "
-                    + NOTIFICATION_COMPLETED + " INTEGER DEFAULT 0);";
-            db.execSQL(queryNotificationTable);
-        } catch (Exception e) {
-            Log.d("SQLite onCreate", "Problem z tworzeniem tabel " + e.getMessage());
-        }
-
-
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 6) {
-            onCreate(db);
-        }
-    }
-
-    public boolean insertEvent(Event event) {
-        try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(EVENT_NAME, event.getEventName());
-            contentValues.put(EVENT_DISCRIPTION, event.getEventDiscription());
-            contentValues.put(EVENT_COLOR, event.getEventColor());
-            contentValues.put(MONTH_INTERVAL, event.getItsMonthInterval());
-            contentValues.put(MONTH_NUMBER_OF_REPEATS, event.getMonthNumberOfRepeats());
-            contentValues.put(SHORT_TIME_INTERVAL, event.getItCustomTimeInterval());
-            contentValues.put(SHORT_TIME_TYPE, event.getCustomTimeType());
-            contentValues.put(SHORT_TIME_REPEATS_ALL_TIME, event.getItsCustomTimeRepeatsAllTime());
-            contentValues.put(SHORT_TIME_NUMBER_OF_REPEATS, event.getCustomTimeNumberOfRepeats());
-            contentValues.put(ONE_TIME, event.getItsOneTimeEvent());
-            contentValues.put(ONE_TIME_DATE, event.getOneTimeEventDateInMillis());
-            contentValues.put(TIME_INTERVAL, event.getTimeInterval());
-            contentValues.put(EVENT_TIME_DEFAULT, event.getEventTimeDefault());
-            contentValues.put(EVENT_TIME, event.getEventTimeInMillis());
-            contentValues.put(START_DATE, event.getStartDateInMillis());
-            long result = db.insert(TABLE_EVENTS, null, contentValues);
-            if (result == -1) {
-                return false;
-            } else {
-                try {
-                    if (!event.getItsOneTimeEvent()) {
-                        Log.d("insertEvent", "Tworzenie tabeli");
-                        String query = "CREATE TABLE " + "\"" + event.getEventName() + "\"" + " (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                + "DAY REAL, " +
-                                "NOTIFICATION_CREATED INTEGER DEFAULT 0);";
-                        db.execSQL(query);
-                        if (event.getItsMonthInterval()) {
-                            boolean resultFillTable = fillTableDayOfMonth(event.getEventName(), event.getTimeInterval(), event.getStartDate(), event.getMonthNumberOfRepeats());
-                            if (resultFillTable) {
-                                Log.d("SQLite insertEvent", "Tworzenie udane");
-                            } else {
-                                Log.d("SQLite insertEvent", "Tworzenie nieudane");
-                                return false;
-                            }
-                        } else if (event.getItCustomTimeInterval()) {
-                            boolean resultJumpDay = fillTableJumpDay(event.getEventName(), event.getTimeInterval(), event.getStartDate(),
-                                    event.getCustomTimeType(), event.getItsCustomTimeRepeatsAllTime(), event.getCustomTimeNumberOfRepeats(),
-                                    event.getEventTimeDefault(), event.getEventTime());
-                            if (resultJumpDay) {
-                                Log.d("SQLite insertEvent", "Tworzenie udane");
-                            } else {
-                                Log.d("SQLite insertEvent", "Tworzenie nieudane");
-                                return false;
-                            }
-                        }
+            if (!eventModel.getItsOneTimeEvent()) {
+                Log.d("insertEvent", "Tworzenie tabeli");
+                sdb.execSQL(EventsTimeTemplateModel.TEMPLATE_TABLE_NAME_CREATE_SQL.replace(EventsTimeTemplateModel.TEMPLATE_TABLE_NAME_PLACEHOLDER,
+                        eventModel.getEventName().replace(" ", "_")));
+                if (eventModel.getItsMonthInterval()) {
+                    boolean resultFillTable = fillTableDayOfMonth(eventModel.getEventName(), eventModel.getTimeInterval(), eventModel.getStartDate(), eventModel.getMonthNumberOfRepeats());
+                    if (resultFillTable) {
+                        Log.d("SQLite insertEvent", "Tworzenie udane");
+                        return true;
+                    } else {
+                        Log.d("SQLite insertEvent", "Tworzenie nieudane");
+                        return false;
                     }
-                } catch (Exception e) {
-                    Log.w("SQLite insertEvent", "Problem z utworzeniem tabeli " + e.getMessage());
-                    return false;
+                } else if (eventModel.getItCustomTimeInterval()) {
+                    boolean resultJumpDay = fillTableJumpDay(eventModel.getEventName(), eventModel.getTimeInterval(), eventModel.getStartDate(),
+                            eventModel.getCustomTimeType(), eventModel.getItsCustomTimeRepeatsAllTime(), eventModel.getCustomTimeNumberOfRepeats(),
+                            eventModel.getEventTimeDefault(), eventModel.getEventTime());
+                    if (resultJumpDay) {
+                        Log.d("SQLite insertEvent", "Tworzenie udane");
+                        return true;
+                    } else {
+                        Log.d("SQLite insertEvent", "Tworzenie nieudane");
+                        return false;
+                    }
                 }
             }
-            return true;
         } catch (Exception e) {
-            Log.w("SQLite insertEvent", e.getMessage());
+            Log.w("SQLite insertEvent", "Problem z utworzeniem tabeli " + e.getMessage());
             return false;
         }
+        return true;
     }
 
-    public boolean fillTableDayOfMonth(String tableName, int dayOfMonth, LocalDate startDate, int monthNumberOfRepeats) {
+    public static boolean fillTableDayOfMonth(String tableName, int dayOfMonth, LocalDate startDate, int monthNumberOfRepeats) {
         try {
-            SQLiteDatabase db = this.getWritableDatabase();
+            SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
             LocalDate newDate = startDate;
             LocalDate tempDate = new LocalDate(startDate.getYear(), startDate.getMonthOfYear(), dayOfMonth);
             if (startDate.toDateTimeAtStartOfDay().getMillis() < tempDate.toDateTimeAtStartOfDay().getMillis()) {
                 long tempDateAsMillis = tempDate.toDateTimeAtStartOfDay().getMillis();
                 ContentValues contentValuesCurrentDate = new ContentValues();
                 contentValuesCurrentDate.put("DAY", tempDateAsMillis);
-                long resultCurrentDate = db.insert("'" + tableName + "'", null, contentValuesCurrentDate);
+                long resultCurrentDate = sdb.insert("'" + tableName + "'", OnConflictStrategy.IGNORE, contentValuesCurrentDate);
                 if (resultCurrentDate == -1) {
                     return false;
                 }
@@ -225,7 +101,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                     long localDataToMillis = newDate.toDateTimeAtStartOfDay().getMillis();
                     ContentValues contentValues = new ContentValues();
                     contentValues.put("DAY", localDataToMillis);
-                    long result = db.insert("'" + tableName + "'", null, contentValues);
+                    long result = sdb.insert("'" + tableName + "'", OnConflictStrategy.IGNORE, contentValues);
                     if (result == -1) {
                         return false;
                     }
@@ -242,14 +118,15 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public boolean fillTableJumpDay(String tableName, int timeInterval, LocalDate startDate,
-                                    int shortTimeType, boolean shortTimeRepeatsAllTime,
-                                    int shortTimeNumberOfRepeats, boolean itsEventTimeDefault, LocalTime eventTime) {
+    public static boolean fillTableJumpDay(String tableName, int timeInterval, LocalDate startDate,
+                                           int shortTimeType, boolean shortTimeRepeatsAllTime,
+                                           int shortTimeNumberOfRepeats, boolean itsEventTimeDefault, LocalTime eventTime) {
         try {
-            SQLiteDatabase db = this.getWritableDatabase();
+            SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
             LocalDate newDate;
             if (itsEventTimeDefault) {
-                long defaultTime = getDefaultTime();
+                SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+                long defaultTime = settingsViewModel.getDefaultTime();
                 long currentTime = LocalTime.now(DateTimeZone.forID(TimeZone.getDefault().getID())).getMillisOfDay();
                 if (defaultTime > currentTime) {
                     newDate = startDate;
@@ -276,7 +153,7 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                     long newDateAsMillis = newDate.toDateTimeAtStartOfDay().getMillis();
                     ContentValues contentValues = new ContentValues();
                     contentValues.put("DAY", newDateAsMillis);
-                    long result = db.insert("'" + tableName + "'", null, contentValues);
+                    long result = sdb.insert("'" + tableName + "'", OnConflictStrategy.IGNORE, contentValues);
                     if (result == -1) {
                         return false;
                     } else {
@@ -308,68 +185,18 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public boolean deleteEvent(String eventName) {
+
+    public static boolean checkTableForCurrentDate(LocalDate currentDate, EventModel eventModel) {
         try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            db.execSQL("DROP TABLE " + "\"" + eventName + "\"");
-            db.execSQL("DELETE FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"");
-            String queryEvent = "SELECT * FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"";
-            String queryTable = "select DISTINCT tbl_name from sqlite_master where tbl_name = " + "\"" + eventName + "\"";
-            Cursor cursorEvent = db.rawQuery(queryEvent, null);
-            boolean isInTable = cursorEvent.getCount() == 0;
-            cursorEvent.close();
-            Cursor cursorTable = db.rawQuery(queryTable, null);
-            boolean isTable = cursorTable.getCount() == 0;
-            cursorTable.close();
-            return isInTable && isTable;
-        } catch (Exception e) {
-            Log.w("SQLite deleteEvent", "Problem z usunięciem elementuz bazy " + e.getMessage());
-            return false;
-        }
-    }
-
-    public Event getEvent(String eventName) {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT * FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + EVENT_NAME + " = " + "\"" + eventName + "\"";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            cursor.moveToFirst();
-            boolean tempMonthInterval = cursor.getInt(cursor.getColumnIndex(MONTH_INTERVAL)) == 1;
-            boolean tempShortTimeInterval = cursor.getInt(cursor.getColumnIndex(SHORT_TIME_INTERVAL)) == 1;
-            boolean tempShortTimeRepeatAllTime = cursor.getInt(cursor.getColumnIndex(SHORT_TIME_REPEATS_ALL_TIME)) == 1;
-            boolean tempOneTimeEvent = cursor.getInt(cursor.getColumnIndex(ONE_TIME)) == 1;
-            long oneTimeEventDate = cursor.getLong(cursor.getColumnIndex(ONE_TIME_DATE));
-            boolean tempItsDefaultTime = cursor.getInt(cursor.getColumnIndex(EVENT_TIME_DEFAULT)) == 1;
-            long tempEventTime = cursor.getLong(cursor.getColumnIndex(EVENT_TIME));
-            long tempStartDate = cursor.getLong(cursor.getColumnIndex(START_DATE));
-            Event tempEvent = new Event(cursor.getString(cursor.getColumnIndex(EVENT_NAME)), cursor.getString(cursor.getColumnIndex(EVENT_DISCRIPTION))
-                    , cursor.getInt(cursor.getColumnIndex(EVENT_COLOR)), tempMonthInterval, cursor.getInt(cursor.getColumnIndex(MONTH_NUMBER_OF_REPEATS)),
-                    tempShortTimeInterval, cursor.getInt(cursor.getColumnIndex(SHORT_TIME_TYPE)),
-                    tempShortTimeRepeatAllTime, cursor.getInt(cursor.getColumnIndex(SHORT_TIME_NUMBER_OF_REPEATS)),
-                    tempOneTimeEvent, new LocalDate(oneTimeEventDate), tempItsDefaultTime,
-                    tempEventTime,
-                    cursor.getInt(cursor.getColumnIndex(TIME_INTERVAL)), new LocalDate(tempStartDate));
-            cursor.close();
-            return tempEvent;
-        } catch (Exception e) {
-            Log.w("SQLite getEvent", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return null;
-        }
-
-    }
-
-
-    public boolean checkTableForCurrentDate(LocalDate currentDate, String tableName) {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            Event event = getEvent(tableName);
-            if (event.getItsOneTimeEvent()) {
-                long oneTimeEventDate = event.getOneTimeEventDateInMillis();
+            SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
+            String tableName = eventModel.getEventName().replace(" ", "_");
+            if (eventModel.getItsOneTimeEvent()) {
+                long oneTimeEventDate = eventModel.getOneTimeEventDateInMillis();
                 return new LocalDate(oneTimeEventDate).equals(currentDate);
             }
             long currentDateAsMillis = currentDate.toDateTimeAtStartOfDay().getMillis();
             String query = "SELECT DAY FROM " + "\"" + tableName + "\"" + " WHERE DAY = " + "\"" + currentDateAsMillis + "\"";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
+            @SuppressLint("Recycle") Cursor cursor = sdb.query(query, null);
             boolean isInTable = cursor.getCount() != 0;
             cursor.close();
             return isInTable;
@@ -380,52 +207,15 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-
-    public List<Event> getAllEvent() {
-        try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            String query = "SELECT * FROM " + "\"" + TABLE_EVENTS + "\"";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            List<Event> eventsList = new ArrayList<>();
-            if (cursor.getCount() == 0) {
-                return eventsList;
-            }
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                boolean tempMonthInterval = cursor.getInt(cursor.getColumnIndex(MONTH_INTERVAL)) == 1;
-                boolean tempShortTimeInterval = cursor.getInt(cursor.getColumnIndex(SHORT_TIME_INTERVAL)) == 1;
-                boolean tempShortTimeRepeatAllTime = cursor.getInt(cursor.getColumnIndex(SHORT_TIME_REPEATS_ALL_TIME)) == 1;
-                boolean tempOneTimeEvent = cursor.getInt(cursor.getColumnIndex(ONE_TIME)) == 1;
-                long oneTimeEventDate = cursor.getLong(cursor.getColumnIndex(ONE_TIME_DATE));
-                boolean tempItsDefaultTime = cursor.getInt(cursor.getColumnIndex(EVENT_TIME_DEFAULT)) == 1;
-                long tempEventTime = cursor.getLong(cursor.getColumnIndex(EVENT_TIME));
-                long tempStartDate = cursor.getLong(cursor.getColumnIndex(START_DATE));
-                Event tempEvent = new Event(cursor.getString(cursor.getColumnIndex(EVENT_NAME)), cursor.getString(cursor.getColumnIndex(EVENT_DISCRIPTION))
-                        , cursor.getInt(cursor.getColumnIndex(EVENT_COLOR)), tempMonthInterval, cursor.getInt(cursor.getColumnIndex(MONTH_NUMBER_OF_REPEATS)),
-                        tempShortTimeInterval, cursor.getInt(cursor.getColumnIndex(SHORT_TIME_TYPE)),
-                        tempShortTimeRepeatAllTime, cursor.getInt(cursor.getColumnIndex(SHORT_TIME_NUMBER_OF_REPEATS)),
-                        tempOneTimeEvent, new LocalDate(oneTimeEventDate), tempItsDefaultTime,
-                        tempEventTime,
-                        cursor.getInt(cursor.getColumnIndex(TIME_INTERVAL)), new LocalDate(tempStartDate));
-                eventsList.add(tempEvent);
-
-                cursor.moveToNext();
-
-            }
-            cursor.close();
-            return eventsList;
-        } catch (Exception e) {
-            Log.w("SQLite getAllEvent", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return null;
-        }
-    }
-
     @SuppressLint("LongLogTag")
-    public ArrayList<Event> getEventForCurrentDay(LocalDate currentDay) {
+    public static ArrayList<EventModel> getEventForCurrentDay(LocalDate currentDay) {
         try {
-            ArrayList<Event> eventsForCurrentDay = new ArrayList<>();
+            ArrayList<EventModel> eventsForCurrentDay = new ArrayList<>();
 
-            List<Event> allEvents = getAllEvent();
+            List<EventModel> allEvents = new ArrayList<>();
+            EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
+            allEvents = eventsViewModel.getAllEventsList();
+
             if (allEvents == null) {
                 Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
                 return null;
@@ -435,11 +225,10 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                 eventsForCurrentDay.clear();
                 for (int i = 0; i < allEvents.size(); i++) {
 
-                    Event tempEvent = allEvents.get(i);
+                    EventModel tempEvent = allEvents.get(i);
                     // first check if its one time event
                     // check if event is today
-                    boolean isEventToday = checkTableForCurrentDate(currentDay,
-                            tempEvent.getEventName());
+                    boolean isEventToday = PrzypominajkaDatabaseHelper.checkTableForCurrentDate(currentDay, tempEvent);
                     if (isEventToday) {
                         // if yes add to array
                         eventsForCurrentDay.add(tempEvent);
@@ -453,78 +242,11 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // update default time value
-    @SuppressLint("LongLogTag")
-    public void updateDefaultTimeInSettings(long defaultTime) {
-        try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            String query = "UPDATE " + "\"" + TABLE_SETTINGS + "\"" + " SET " + "\"" + DEFAULT_TIME + "\"" + " = " + "\"" + defaultTime + "\"";
-            db.execSQL(query);
-        } catch (Exception e) {
-            Log.w("SQLite updateDefaultTimeInSettings", "Problem z zapytaniem do bazy danych " + e.getMessage());
-        }
-    }
-
-    // get value of default time (can be change in settings), for now it is 8:00 AM
-    public long getDefaultTime() {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT " + "\"" + DEFAULT_TIME + "\"" + " FROM " + "\"" + TABLE_SETTINGS + "\"";
-            long defaultTime = 28800000;
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            if (cursor.getCount() == 0) {
-                updateDefaultTimeInSettings(defaultTime);
-            } else if (cursor.getCount() > 0) {
-                cursor.moveToFirst();
-                defaultTime = cursor.getLong(cursor.getColumnIndex(DEFAULT_TIME));
-                cursor.close();
-            }
-            return defaultTime;
-        } catch (Exception e) {
-            Log.w("SQLite getDefaultTime", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return -1;
-        }
-    }
-
-    // get value of job service start time interval (can be change in settings), for now it is 0:15
-    @SuppressLint("LongLogTag")
-    public long getCheckEventInterval() {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT " + "\"" + NOTIFY_CHECK_INTERVAL + "\"" + " FROM " + "\"" + TABLE_SETTINGS + "\"";
-            long intervalTime = 900000;
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            if (cursor.getCount() == 0) {
-                updateCheckEventInterval(intervalTime);
-            } else if (cursor.getCount() > 0) {
-                cursor.moveToFirst();
-                intervalTime = cursor.getLong(cursor.getColumnIndex(NOTIFY_CHECK_INTERVAL));
-                cursor.close();
-            }
-            return intervalTime;
-        } catch (Exception e) {
-            Log.w("SQLite getCheckEventInterval", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return -1;
-        }
-    }
-
-    // update of job service start time interval
-    public void updateCheckEventInterval(long intervalTime) {
-        try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            String query = "UPDATE " + "\"" + TABLE_SETTINGS + "\"" + " SET " + "\"" + NOTIFY_CHECK_INTERVAL + "\"" + " = "
-                    + "\"" + intervalTime + "\"";
-            db.execSQL(query);
-        } catch (Exception e) {
-            Log.w("SQLite updateCheckEventInterval", "Problem z zapytaniem do bazy danych " + e.getMessage());
-        }
-    }
-
     //setting a value that informs whether the notification has been created
     @SuppressLint("LongLogTag")
-    public void updateNotificationCreatedColumn(String eventName, boolean isCreated, LocalDate date) {
+    public static void updateNotificationCreatedColumn(String eventName, boolean isCreated, LocalDate date) {
         try {
-            SQLiteDatabase db = this.getWritableDatabase();
+            SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
             eventName = eventName.replace(" ", "_");
             long dateAsMillis = date.toDateTimeAtStartOfDay().getMillis();
             String query;
@@ -535,49 +257,22 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
                 query = "UPDATE " + "\"" + eventName + "\"" + " SET NOTIFICATION_CREATED  = " + "\"" + 0
                         + "\"" + " WHERE DAY = " + "\"" + dateAsMillis + "\"";
             }
-            db.execSQL(query);
+            sdb.execSQL(query);
         } catch (Exception e) {
             Log.w("SQLite updateNotificationCreatedColumn", "Problem z zapytaniem do bazy danych " + e.getMessage());
         }
     }
 
-    // for now uneccessary, but in future maybe will be use for something
-    public LocalTime getEventTime(String eventName) {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            LocalTime eventTime;
-
-            String queryItsDefault = "SELECT EVENT_TIME_DEFAULT FROM " + "\"" + TABLE_EVENTS + "\"" +
-                    " WHERE " + "\"" + EVENT_NAME + "\"" + " = " + "\"" + eventName + "\"";
-            @SuppressLint("Recycle") Cursor cursorItsDefault = db.rawQuery(queryItsDefault, null);
-            cursorItsDefault.moveToFirst();
-            if (cursorItsDefault.getInt(cursorItsDefault.getColumnIndex("EVENT_TIME_DEFAULT")) == 1) {
-                eventTime = new LocalTime(getDefaultTime(), DateTimeZone.forID(TimeZone.getDefault().getID()));
-                cursorItsDefault.close();
-            } else {
-                String queryEventTime = "SELECT " + "\"" + EVENT_TIME + "\"" + " FROM " + "\"" + TABLE_EVENTS + "\"" +
-                        " WHERE " + "\"" + EVENT_NAME + "\"" + " = " + "\"" + eventName + "\"";
-                @SuppressLint("Recycle") Cursor cursorEventTime = db.rawQuery(queryEventTime, null);
-                cursorEventTime.moveToFirst();
-                eventTime = new LocalTime(cursorEventTime.getLong(cursorEventTime.getColumnIndex(EVENT_TIME)), DateTimeZone.forID(TimeZone.getDefault().getID()));
-                cursorEventTime.close();
-            }
-            return eventTime;
-        } catch (Exception e) {
-            Log.w("SQLite getEventTime", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return null;
-        }
-    }
 
     // check event table for current date and check if the notification has been created
     @SuppressLint("LongLogTag")
-    public boolean checkIfNotificationIsCreated(String eventName, LocalDate date) {
+    public static boolean checkIfNotificationIsCreated(String eventName, LocalDate date) {
         try {
-            SQLiteDatabase db = this.getReadableDatabase();
+            SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
             long dateInMillis = date.toDateTimeAtStartOfDay().getMillis();
             String query = "SELECT NOTIFICATION_CREATED FROM " + "\"" + eventName + "\"" +
                     " WHERE DAY  = " + "\"" + dateInMillis + "\"";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
+            @SuppressLint("Recycle") Cursor cursor = sdb.query(query, null);
             cursor.moveToFirst();
             boolean isCreated = cursor.getInt(cursor.getColumnIndex("NOTIFICATION_CREATED")) == 1;
             cursor.close();
@@ -585,144 +280,6 @@ public class PrzypominajkaDatabaseHelper extends SQLiteOpenHelper {
         } catch (Exception e) {
             Log.w("SQLite checkIfNotificationIsCreated", "Problem z zapytaniem do bazy danych " + e.getMessage());
             return false;
-        }
-    }
-
-    // get event ID from TABLE_EVENTS
-    public int getEventId(String eventName) {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            eventName = eventName.replace(" ", "_");
-            String query = "SELECT _id FROM " + "\"" + TABLE_EVENTS + "\"" + " WHERE " + "\"" +
-                    EVENT_NAME + "\"" + " = " + "\"" + eventName + "\"";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            cursor.moveToFirst();
-            int id;
-            if (cursor.getCount() > 0) {
-                id = cursor.getInt(cursor.getColumnIndex("_id"));
-            } else {
-                id = -1;
-            }
-            cursor.close();
-            return id;
-        } catch (Exception e) {
-            Log.w("SQLite getEventId", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return -1;
-        }
-    }
-
-    // for TABLE_NOTIFICATION, insert information about created notification (name of event/events, eventID, date, time and information about display)
-    public boolean insertNotification(Notification notification) {
-        try {
-            int notificationCompl;
-            if (notification.itsCompleted()) {
-                notificationCompl = 1;
-            } else {
-                notificationCompl = 0;
-            }
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(NOTIFICATION_EVENT_NAME, notification.getNotificationName().replace(" ", "_"));
-            contentValues.put(NOTIFICATION_ID, notification.getNotificationID());
-            contentValues.put(NOTIFICATION_TIME, notification.getNotificationDateInMillis());
-            contentValues.put(NOTIFICATION_DATE, notification.getNotificationDateInMillis());
-            contentValues.put(NOTIFICATION_COMPLETED, notificationCompl);
-            float result = db.insert(TABLE_NOTIFICATIONS, null, contentValues);
-            return result != -1;
-        } catch (Exception e) {
-            Log.w("SQLite insertNotification", "Problem z umieszczeniem notifikacji " + e.getMessage());
-            return false;
-        }
-    }
-
-    public List<Notification> getNoCompletedNotification(String notificationName) {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            List<Notification> notifications = new ArrayList<>();
-            notificationName = notificationName.replace(" ", "_");
-            String query = "SELECT * FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" + " WHERE " + "\"" +
-                    NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\"" +
-                    " AND " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = 0;";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            cursor.moveToFirst();
-            while (!cursor.isAfterLast()) {
-                String tempNotificationName = cursor.getString(cursor.getColumnIndex(NOTIFICATION_EVENT_NAME));
-                int tempNotificationID = cursor.getInt(cursor.getColumnIndex(NOTIFICATION_ID));
-                long tempNotificationTime = cursor.getLong(cursor.getColumnIndex(NOTIFICATION_TIME));
-                long tempNotificationDate = cursor.getLong(cursor.getColumnIndex(NOTIFICATION_DATE));
-                boolean tempNotificationCompleted = cursor.getInt(cursor.getColumnIndex(NOTIFICATION_COMPLETED)) == 1;
-
-                Notification tempNotification = new Notification(tempNotificationName, tempNotificationID, new LocalTime(tempNotificationTime, DateTimeZone.forID("UTC")),
-                        new LocalDate(tempNotificationDate), tempNotificationCompleted);
-
-                notifications.add(tempNotification);
-                cursor.moveToNext();
-            }
-            cursor.close();
-            return notifications;
-        } catch (Exception e) {
-            Log.w("getNoCompletedNotification", "Problem z pobraniem notyfikacji z bazy " + e.getMessage());
-            return null;
-        }
-    }
-
-    // update information about showing notification (run only from RemindBroadcast for now, when notification is displayed)
-    public void updateNotificationCompleted(String notificationName, LocalDate notifcationDate, boolean notificationCompleted) {
-        try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            notificationName = notificationName.replace(" ", "_");
-            long notificationDate = notifcationDate.toDateTimeAtStartOfDay().getMillis();
-            String query;
-            if (notificationCompleted) {
-                query = "UPDATE " + "\"" + TABLE_NOTIFICATIONS + "\"" + " SET " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = " + "\"" + 1
-                        + "\"" + " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\""
-                        + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + notificationDate + "\"";
-            } else {
-                query = "UPDATE " + "\"" + TABLE_NOTIFICATIONS + "\"" + " SET " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = " + "\"" + 0
-                        + "\"" + " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\""
-                        + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + notificationDate + "\"";
-            }
-            db.execSQL(query);
-        } catch (Exception e) {
-            Log.w("SQLite updateNotificationCompleted", "Problem z zaktualizowaniem wpisu " + e.getMessage());
-        }
-    }
-
-    // looking for notification in TABLE_NOTIFICATION
-    public boolean checkNotificationCreatedButNotNotify(Notification notification) {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT * FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" +
-                    " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notification.getNotificationName().replace(" ", "_") + "\""
-                    + " AND " + "\"" + NOTIFICATION_DATE + "\"" + " = " + "\"" + notification.getNotificationDateInMillis() + "\""
-                    + " AND " + "\"" + NOTIFICATION_TIME + "\"" + " = " + "\"" + notification.getNotificationTimeInMillis() + "\""
-                    + " AND " + "\"" + NOTIFICATION_COMPLETED + "\"" + " = 0";
-            @SuppressLint("Recycle") Cursor cursor = db.rawQuery(query, null);
-            boolean isCreated;
-            if (cursor.getCount() > 0) {
-                isCreated = true;
-                cursor.close();
-            } else {
-                isCreated = false;
-                cursor.close();
-            }
-            return isCreated;
-        } catch (Exception e) {
-            Log.w("SQLite checkIfNotificationIsCreated", "Problem z zapytaniem do bazy danych " + e.getMessage());
-            return false;
-        }
-    }
-
-    public void deleteNotification(String notificationName) {
-        try {
-            notificationName = notificationName.replace(" ", "_");
-            SQLiteDatabase db = this.getWritableDatabase();
-            String query = "DELETE FROM " + "\"" + TABLE_NOTIFICATIONS + "\"" +
-                    " WHERE " + "\"" + NOTIFICATION_EVENT_NAME + "\"" + " = " + "\"" + notificationName + "\"";
-            db.execSQL(query);
-
-        } catch (Exception e) {
-            Log.w("SQLite checkIfNotificationIsCreated", "Problem z zapytaniem do bazy danych " + e.getMessage());
         }
     }
 }

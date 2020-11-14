@@ -1,10 +1,12 @@
 package com.example.przypominajka.fragments.calendar;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
@@ -12,9 +14,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,21 +35,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.przypominajka.activities.AddNewEventActivity;
-import com.example.przypominajka.models.Event;
 import com.example.przypominajka.activities.EventDetailsActivity;
+import com.example.przypominajka.adapters.EventListAdapter;
+import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.utils.MonthViewBuild;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
-import com.example.przypominajka.adapters.EventsListColorAdapter;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.TranslateMonths;
+import com.example.przypominajka.viewModels.EventsViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.example.przypominajka.R.drawable.text_view_border;
+import static com.example.przypominajka.R.drawable.text_view_border_clicked;
 
 
 public class CalendarFragment extends Fragment {
@@ -54,24 +64,30 @@ public class CalendarFragment extends Fragment {
     Typeface defaultTypeface;
     ColorStateList normalTextColor;
 
-    ArrayList<Event> eventArray = new ArrayList<>();
+    ArrayList<EventModel> eventArray = new ArrayList<>();
     ArrayList<Integer> eventColorForCurrentDateArray = new ArrayList<>();
-    EventsListColorAdapter adapter;
+    EventListAdapter adapter;
 
-    ListView eventList;
+    RecyclerView eventList;
 
-    PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper;
     LinearLayout linearLayoutlinearLayoutIfTodayNothing;
     View viewThis;
 
     FloatingActionButton fab;
 
     Drawable textBorder;
+    Drawable textBorderWhenClicked;
 
     Button buttonLeft;
     Button buttonRight;
 
     TextView listViewLabel;
+
+    private EventListAdapter eventListAdapter;
+
+    private EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
+
+    LinearLayout previousClickedLinearLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -97,7 +113,7 @@ public class CalendarFragment extends Fragment {
                     LocalDate previousMonth = currentDateInPreview.plusMonths(-1);
                     currentDateInPreview = previousMonth;
                     setCurrentMonth(previousMonth);
-                    Button buttonMonth = (Button) viewThis.findViewById(R.id.btnMonth);
+                    Button buttonMonth = viewThis.findViewById(R.id.btnMonth);
                     buttonMonth.setText(TranslateMonths.translateMonth(previousMonth));
                     Button buttonYear = viewThis.findViewById(R.id.btnYear);
                     buttonYear.setText(String.valueOf(previousMonth.getYear()));
@@ -106,7 +122,7 @@ public class CalendarFragment extends Fragment {
                 }
             }
         });
-        buttonRight = (Button) v.findViewById(R.id.btnRigth);
+        buttonRight = v.findViewById(R.id.btnRigth);
         buttonRight.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -114,7 +130,7 @@ public class CalendarFragment extends Fragment {
                     LocalDate nextMonth = currentDateInPreview.plusMonths(1);
                     currentDateInPreview = nextMonth;
                     setCurrentMonth(nextMonth);
-                    Button buttonMonth = (Button) viewThis.findViewById(R.id.btnMonth);
+                    Button buttonMonth = viewThis.findViewById(R.id.btnMonth);
                     buttonMonth.setText(TranslateMonths.translateMonth(nextMonth));
                     Button buttonYear = viewThis.findViewById(R.id.btnYear);
                     buttonYear.setText(String.valueOf(nextMonth.getYear()));
@@ -125,6 +141,7 @@ public class CalendarFragment extends Fragment {
         });
 
         textBorder = ContextCompat.getDrawable(context, text_view_border);
+        textBorderWhenClicked = ContextCompat.getDrawable(context, text_view_border_clicked);
 
         return v;
     }
@@ -135,7 +152,7 @@ public class CalendarFragment extends Fragment {
     public void onAttach(Context cont) {
         super.onAttach(context);
         context = cont;
-        przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(context);
+
 
     }
 
@@ -148,7 +165,6 @@ public class CalendarFragment extends Fragment {
         listViewLabel = view.findViewById(R.id.textViewListLabel);
         linearLayoutlinearLayoutIfTodayNothing = view.findViewById(R.id.linearLayoutIfTodayNothing);
         eventList = view.findViewById(R.id.eventList);
-
         // this is for calendar cells that do not belong to the current month
         TextView textView = view.findViewById(R.id.textView1x1);
         defaultTypeface = textView.getTypeface();
@@ -156,49 +172,28 @@ public class CalendarFragment extends Fragment {
 
         currentDateInPreview = LocalDate.now();
 
-        // run method in other thread because setCurrentMonth need optimalization (to many for loops)
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                setCurrentMonth(currentDateInPreview);
-            }
-        });
-
         // set actually month and year for current previews of months
         Button buttonMonth = view.findViewById(R.id.btnMonth);
         buttonMonth.setText(TranslateMonths.translateMonth(currentDateInPreview));
 
         Button buttonYear = view.findViewById(R.id.btnYear);
         buttonYear.setText(String.valueOf(currentDateInPreview.getYear()));
+        RecyclerView.LayoutManager recycelLayoutManager = new
+                LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        eventList.setLayoutManager(recycelLayoutManager);
+        eventListAdapter = new EventListAdapter(context);
+        eventList.setAdapter(eventListAdapter);
 
-        // showEventList set ListView and connect to database so the situation as above
-        requireActivity().runOnUiThread(new Runnable() {
+        // using LiveData observer to refresh calendar view and recycle view when add or delete event
+        eventsViewModel.getAllEvents().observe(getViewLifecycleOwner(), new Observer<List<EventModel>>() {
             @Override
-            public void run() {
-                showEventList(currentDateInPreview);
-            }
-        });
-
-    }
-
-    // after add new event or delete event ListView must be refreshed
-    @Override
-    public void onResume() {
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                showEventList(currentDateInPreview);
-            }
-        });
-
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+            public void onChanged(List<EventModel> eventModels) {
                 setCurrentMonth(currentDateInPreview);
+                showEventList(currentDateInPreview);
             }
         });
-        super.onResume();
     }
+
 
     public void setCurrentMonth(LocalDate date) {
 
@@ -228,11 +223,19 @@ public class CalendarFragment extends Fragment {
                         if (tempMonthModel[finalX][finalI - 1].equals(LocalDate.now())) {
                             listViewLabel.setText("Lista zdarzeń na dziś:");
                             showEventList(LocalDate.now());
+                            linearLayout.setBackground(textBorder);
                         } else {
+                            if (previousClickedLinearLayout != null) {
+                                previousClickedLinearLayout.setBackground(new ColorDrawable(Color.TRANSPARENT)); // reset previous cell to transparent border
+                                previousClickedLinearLayout = linearLayout;
+                            }
                             String temp = "Lista zdarzeń na " + tempMonthModel[finalX][finalI - 1].getDayOfMonth() +
                                     "." + tempMonthModel[finalX][finalI - 1].getMonthOfYear() + "." + tempMonthModel[finalX][finalI - 1].getYear();
                             listViewLabel.setText(temp);
                             showEventList(tempMonthModel[finalX][finalI - 1]);
+                            linearLayout.setBackground(textBorderWhenClicked); //set gray border in clicked cell of table
+                            previousClickedLinearLayout = linearLayout;
+
                         }
                     }
                 });
@@ -254,11 +257,11 @@ public class CalendarFragment extends Fragment {
                         }
 
                     } else {
-                        // if there is an event on a given day, a square with the event color is added to frame layout
+                        // if there is an event on a given day, a small frame layout with the event color background is added to frame layout
                         LinearLayout frameEvents = (LinearLayout) linearLayout.getChildAt(z);
                         frameEvents.removeAllViews();
                         LocalDate tempDataTime = monthModel[x][i - 1];
-                        List<Event> events = przypominajkaDatabaseHelper.getAllEvent();
+                        List<EventModel> events = eventsViewModel.getAllEventsList();
                         if (events == null) {
                             Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
                             Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
@@ -266,11 +269,12 @@ public class CalendarFragment extends Fragment {
                         } else if (events.size() == 0) {
                             eventColorForCurrentDateArray.clear();
                             Log.d("SQLite setCurrentMonth", "Brak wydarzeń do pokazania");
+                            continue;
                         } else {
                             eventColorForCurrentDateArray.clear();
-                            for (Event tempEvent : events) {
-                                boolean isEventToday = przypominajkaDatabaseHelper.checkTableForCurrentDate(tempDataTime,
-                                        tempEvent.getEventName());
+                            for (EventModel tempEvent : events) {
+                                boolean isEventToday = PrzypominajkaDatabaseHelper.checkTableForCurrentDate(tempDataTime,
+                                        tempEvent);
                                 if (isEventToday) {
                                     eventColorForCurrentDateArray.add(tempEvent.getEventColor());
                                 }
@@ -289,7 +293,10 @@ public class CalendarFragment extends Fragment {
                                 frameToAddEmpty.setLayoutParams(new FrameLayout.LayoutParams(10, 10, 1));
                                 frameToAddEmpty.setBackgroundColor(Color.TRANSPARENT);
 
+                                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                params.gravity = Gravity.CENTER;
                                 frameEvents.addView(frameToAddEmpty);
+                                frameEvents.setLayoutParams(params);
                             }
                             if (eventColorForCurrentDateArray.size() > 4) {
 
@@ -311,6 +318,9 @@ public class CalendarFragment extends Fragment {
                                     textViewETC.setTextSize(TypedValue.COMPLEX_UNIT_SP, 8f);
                                     textViewETC.setTextColor(Color.BLACK);
                                     frameEvents.addView(textViewETC);
+                                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                    params.gravity = Gravity.CENTER;
+                                    frameEvents.setLayoutParams(params);
                                     break;
                                 }
                             }
@@ -330,40 +340,22 @@ public class CalendarFragment extends Fragment {
     // set list view with events
     public void showEventList(LocalDate localDate) {
         // get all event from database
-        eventArray = przypominajkaDatabaseHelper.getEventForCurrentDay(localDate);
-        if (eventArray == null) {
-            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z baza danych", Toast.LENGTH_LONG).show();
-            Log.w("SQLite showEventList", "Wystąpił problem z pobraniem wydarzeń z baza danych");
+        if (eventArray != null) {
+            eventArray.clear();
         }
-
+        eventArray = PrzypominajkaDatabaseHelper.getEventForCurrentDay(localDate);
+        if (eventArray == null) {
+            Log.w("SQLite showEventList", "Wystąpił problem z pobraniem wydarzeń z baza danych");
+            return;
+        }
         if (eventArray.size() > 0) {
             linearLayoutlinearLayoutIfTodayNothing.setVisibility(LinearLayout.GONE);
-
-
-            // using custom adapter for this list view
-            adapter = new EventsListColorAdapter(context, R.layout.row_list, eventArray);
-
-            // set adapter and onClickListener for open event details activity
-            eventList.setAdapter(adapter);
-            eventList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent eventDetail = new Intent(context.getApplicationContext(), EventDetailsActivity.class);
-
-                    EventsListColorAdapter customAdapter = (EventsListColorAdapter) parent.getAdapter();
-                    Event event = customAdapter.getItem(position);
-
-                    assert event != null;
-                    eventDetail.putExtra("EVENT_NAME", event.getEventName());
-                    startActivity(eventDetail);
-                }
-            });
-
+            eventListAdapter.setList(eventArray);
         } else {
-
             linearLayoutlinearLayoutIfTodayNothing.setVisibility(LinearLayout.VISIBLE);
-            adapter = new EventsListColorAdapter(context, R.layout.row_list, eventArray);
-            eventList.setAdapter(adapter);
+            eventListAdapter.setList(eventArray);
         }
     }
+
 
 }

@@ -6,6 +6,9 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -35,15 +38,20 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.example.przypominajka.models.Event;
-import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+//import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
-import com.example.przypominajka.models.Notification;
+import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.utils.ReminderBroadcast;
+import com.example.przypominajka.viewModels.EventsViewModel;
+import com.example.przypominajka.viewModels.NotificationViewModel;
+import com.example.przypominajka.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -59,7 +67,6 @@ import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class AddNewEventActivity extends AppCompatActivity {
 
-    PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper = new PrzypominajkaDatabaseHelper(this);
 
     // Event name section
     private EditText eventNameField;
@@ -113,6 +120,12 @@ public class AddNewEventActivity extends AppCompatActivity {
 
     private boolean itsEventDefaultTime;
 
+    //View models
+    private SettingsViewModel settingsViewModel;
+    private EventsViewModel eventsViewModel;
+    private NotificationViewModel notificationViewModel;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,6 +138,9 @@ public class AddNewEventActivity extends AppCompatActivity {
         assert actionBar != null;
         actionBar.setDisplayHomeAsUpEnabled(true);
 
+        settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
+        eventsViewModel = new ViewModelProvider(this).get(EventsViewModel.class);
+        notificationViewModel = new ViewModelProvider(this).get(NotificationViewModel.class);
         // event name
         eventNameSectionProperties();
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -189,7 +205,7 @@ public class AddNewEventActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                Event event = przypominajkaDatabaseHelper.getEvent(s.toString().replaceAll(" ", "_"));
+                EventModel event = eventsViewModel.findByEventName(s.toString().replaceAll(" ", "_"));
                 if (event != null) {
                     ColorStateList colorStateList = ColorStateList.valueOf(Color.RED);
                     eventNameField.setTextColor(Color.RED);
@@ -430,7 +446,7 @@ public class AddNewEventActivity extends AppCompatActivity {
 
 
                     }
-                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
+                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this)); //Yes 24 hour time
                 timePickerDialogCustomTime.setTitle("Wybierz godzinę");
                 timePickerDialogCustomTime.show();
             }
@@ -558,8 +574,8 @@ public class AddNewEventActivity extends AppCompatActivity {
     private final class SaveEventTask extends AsyncTask<Void, Void, Void> {
         ProgressDialog dialog;
         Context context;
-        boolean result = false;
-        Event newEvent;
+        long result = -1;
+        EventModel newEvent;
         LocalTime time;
 
         public SaveEventTask(Context context) {
@@ -619,7 +635,7 @@ public class AddNewEventActivity extends AppCompatActivity {
             }
 
 
-            time = new LocalTime(przypominajkaDatabaseHelper.getDefaultTime(), DateTimeZone.forID("UCT"));
+            time = new LocalTime(settingsViewModel.getDefaultTime(), DateTimeZone.forID("UCT"));
             long eventTime = time.getMillisOfDay();
             if (itsMonthInterval) {
                 if (monthDefaultTimeCheckbox.isChecked()) {
@@ -671,7 +687,7 @@ public class AddNewEventActivity extends AppCompatActivity {
             if (!checkIfItsCorrect) {
                 return;
             }
-            newEvent = new Event(eventNameField.getText().toString(),
+            newEvent = new EventModel(eventNameField.getText().toString(),
                     eventDiscriptionField.getText().toString(),
                     eventColorNumber,
                     itsMonthInterval,
@@ -682,9 +698,9 @@ public class AddNewEventActivity extends AppCompatActivity {
                     shortTimeNumberOfRepeats,
                     itsOneTimeEvent,
                     oneTimeEventDate,
+                    timeIntervalNumber, startDateLocalData,
                     itsEventDefaultTime,
-                    eventTime,
-                    timeIntervalNumber, startDateLocalData);
+                    eventTime);
 
             super.onPreExecute();
 
@@ -693,7 +709,7 @@ public class AddNewEventActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-                result = przypominajkaDatabaseHelper.insertEvent(newEvent);
+                result = eventsViewModel.insertEvent(newEvent);
             } catch (Exception e) {
                 Log.d("doInBackground", Objects.requireNonNull(e.getMessage()));
             }
@@ -702,7 +718,7 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            if (result) {
+            if (result != -1) {
                 // if event insert was successful set first alarm for nearest date
                 DateTime tempEventTime;
 
@@ -713,7 +729,6 @@ public class AddNewEventActivity extends AppCompatActivity {
                 if (tempEventTime.getMillis() < DateTime.now().getMillis()) {
                     tempEventTime = tempEventTime.plusDays(1);
                 }
-                Log.d("AddNewActivity", tempEventTime.toString());
 
                 AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                 PendingIntent alarmIntent;
@@ -723,8 +738,8 @@ public class AddNewEventActivity extends AppCompatActivity {
                 int year = tempEventTime.getYear();
                 String yearShortString = Integer.toString(year).substring(2);
                 int yearShort = Integer.parseInt(yearShortString);
+                int eventID = eventsViewModel.getEventID(newEvent.getEventName());
 
-                int eventID = przypominajkaDatabaseHelper.getEventId(newEvent.getEventName());
                 int notifyAndPendingIntentID;
                 if (eventID != -1) {
                     notifyAndPendingIntentID = Integer.parseInt(String.valueOf(eventID) +
@@ -742,25 +757,25 @@ public class AddNewEventActivity extends AppCompatActivity {
                     return;
                 }
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
-                przypominajkaDatabaseHelper.updateNotificationCreatedColumn(eventNameField.getText().toString(), true,
+                PrzypominajkaDatabaseHelper.updateNotificationCreatedColumn(eventNameField.getText().toString(), true,
                         new LocalDate(tempEventTime.getYear(), tempEventTime.getMonthOfYear(), tempEventTime.getDayOfMonth()));
 
                 Log.d("AddNewEvent", "Stworzono powiadomienie dla " + eventNameField.getText().toString() + " o godzinie " + tempEventTime.toString());
 
-                Notification newNotification = new Notification(eventNameField.getText().toString(), notifyAndPendingIntentID,
+                NotificationModel newNotification = new NotificationModel(eventNameField.getText().toString(), notifyAndPendingIntentID,
                         new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()), tempEventTime.toLocalDate(), false);
-                boolean insertNotify = przypominajkaDatabaseHelper.insertNotification(newNotification);
-
-                if (insertNotify) {
+                long result = notificationViewModel.insertNotification(newNotification);
+                if (result != -1) {
                     Log.d("AddNewEvent", "Dodano powiadomienie dla " + eventNameField.getText().toString() + " " + tempEventTime.toLocalDate().toString()
                             + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
+                    Toast.makeText(context, "Dodawanie zdarzenia powiodło się", Toast.LENGTH_SHORT).show();
+                    AddNewEventActivity.this.finish();
                 } else {
                     Log.d("AddNewEvent", "Nie udało się dodać informacji o powiadomieniu");
                 }
-                Toast.makeText(context, "Dodawanie zdarzenia powiodło się", Toast.LENGTH_SHORT).show();
-                AddNewEventActivity.this.finish();
             } else {
                 Toast.makeText(context, "Wystąpił problem podczas dodawania zdarzenia", Toast.LENGTH_SHORT).show();
+                Log.d("AddNewActivity InsertEvent", "Dodawanie wydarzenia zwróciło " + String.valueOf(result));
             }
 
             super.onPostExecute(aVoid);
