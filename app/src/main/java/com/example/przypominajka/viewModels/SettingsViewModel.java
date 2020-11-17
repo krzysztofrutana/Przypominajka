@@ -60,4 +60,12 @@ public class SettingsViewModel extends AndroidViewModel {
     public LiveData<Integer> getRowCount() {
         return settingsRepository.getRowCount();
     }
+
+    public LiveData<String> getLocalBackupLocation() {
+        return settingsRepository.getLocalBackupLocation();
+    }
+
+    public int updateLocalBackupLocation(String location) {
+        return settingsRepository.updateLocalBackupLocation(location);
+    }
 }

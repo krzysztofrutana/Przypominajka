@@ -102,4 +102,18 @@ public class SettingsRepository {
     public LiveData<Integer> getRowCount() {
         return settingsDAO.getRowCount();
     }
+
+    public LiveData<String> getLocalBackupLocation() {
+        return settingsDAO.getLocalBackupLocation();
+    }
+
+    public int updateLocalBackupLocation(final String location) {
+        int results = -1;
+        try {
+            results = PrzypominajkaDatabase.databaseWriteExecutor.submit(() -> settingsDAO.updateLocalBackupLocation(location)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
 }

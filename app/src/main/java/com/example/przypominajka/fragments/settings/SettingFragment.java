@@ -1,7 +1,9 @@
 package com.example.przypominajka.fragments.settings;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -9,20 +11,32 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 
+import android.os.Environment;
+import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.Checkable;
 import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.example.przypominajka.R;
 import com.example.przypominajka.activities.AddNewEventActivity;
+import com.example.przypominajka.activities.LocalBackupSettings;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
+import com.example.przypominajka.utils.Permissions;
 import com.example.przypominajka.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTime;
@@ -32,26 +46,38 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.w3c.dom.Text;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.TimeZone;
+
+import yogesh.firzen.mukkiasevaigal.P;
 
 public class SettingFragment extends Fragment {
 
     View view;
 
-    PrzypominajkaDatabaseHelper przypominajkaDatabaseHelper;
-
     private TextView defaultTimeField;
-    private String defaultTime;
 
     private TextView eventRefreshIntervalField;
-    private String eventRefreshInterval;
+
+    private TextView currentBackupSettingsField;
+
+    private Button createBackupButton;
+    private Button restoreBackupButton;
+    private Button configureBackup;
+
+    private Spinner backupLocalizationSpinner;
+    private Spinner restoreLocalizationSpinner;
 
     TimePickerDialog timePickerDefaultTime;
     TimePickerDialog timePickerCheckInterval;
 
-    private SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+    String outputFilePath;
+    String outputFileName;
+
+    private final SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -144,7 +170,50 @@ public class SettingFragment extends Fragment {
             }
         });
 
+        currentBackupSettingsField = view.findViewById(R.id.current_backup_settings);
+        settingsViewModel.getLocalBackupLocation().observe(getViewLifecycleOwner(), s -> {
+            if (s.equals("") || s == null) {
+                currentBackupSettingsField.setText("Przeprowadź konfigurację");
+            } else {
+                String[] paths = s.split("\\|");
+                currentBackupSettingsField.setText(paths[0]);
+            }
+        });
+        createBackupButton = view.findViewById(R.id.create_backup);
+        createBackupButton.setOnClickListener(v -> createBackup());
+
+        restoreBackupButton = view.findViewById(R.id.restore_backup);
+        restoreBackupButton.setOnClickListener(v -> restoreBackup());
+
+        configureBackup = view.findViewById(R.id.configure_backup);
+        configureBackup.setOnClickListener(v -> setBackupSettings());
+
+        backupLocalizationSpinner = view.findViewById(R.id.create_backup_spinner);
+        restoreLocalizationSpinner = view.findViewById(R.id.restore_backup_spinner);
+
         super.onViewCreated(view, savedInstanceState);
     }
 
+    private void createBackup() {
+        if (currentBackupSettingsField.getText() == "") {
+            Toast.makeText(requireContext(), "Najpierw przeprwoadź konfigurację", Toast.LENGTH_SHORT).show();
+        }
+//        else{
+//            return;
+//        }
+    }
+
+    private void restoreBackup() {
+
+    }
+
+    private void setBackupSettings() {
+        if (backupLocalizationSpinner.getSelectedItem().toString().equals("Dysk Google")) {
+            Log.d("ConfigureGoogleDriveBackup", "Message");
+        } else if (backupLocalizationSpinner.getSelectedItem().toString().equals("Na telefonie")) {
+            Permissions.verifyStoragePermissions(getActivity());
+            Intent localSettings = new Intent(getContext(), LocalBackupSettings.class);
+            startActivity(localSettings);
+        }
+    }
 }

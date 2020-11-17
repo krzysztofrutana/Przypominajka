@@ -12,6 +12,7 @@ public class SettingsModel {
 
     private static final String DEFAULT_TIME = "DEFAULT_TIME";
     private static final String NOTIFY_CHECK_INTERVAL = "NOTIFY_CHECK_INTERVAL";
+    private static final String LOCAL_BACKUP_LOCATION = "LOCAL_BACKUP_LOCATION";
 
     @PrimaryKey(autoGenerate = true)
     public int id;
@@ -22,13 +23,17 @@ public class SettingsModel {
     @ColumnInfo(name = NOTIFY_CHECK_INTERVAL)
     public long notifyCheckInterval;
 
+    @ColumnInfo(name = LOCAL_BACKUP_LOCATION)
+    public String localBackupLocation;
+
     public SettingsModel() {
     }
 
     @Ignore
-    public SettingsModel(long defaultTime, long notifyCheckInterval) {
+    public SettingsModel(long defaultTime, long notifyCheckInterval, String localBackupLocation) {
         this.defaultTime = defaultTime;
         this.notifyCheckInterval = notifyCheckInterval;
+        this.localBackupLocation = localBackupLocation;
     }
 
     public long getDefaultTime() {
@@ -37,5 +42,9 @@ public class SettingsModel {
 
     public long getNotifyCheckInterval() {
         return notifyCheckInterval;
+    }
+
+    public String getLocalBackupLocation() {
+        return localBackupLocation;
     }
 }

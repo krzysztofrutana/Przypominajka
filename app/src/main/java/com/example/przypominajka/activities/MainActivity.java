@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final ComponentName componentName = new ComponentName(this, SetAlarmService.class);
         long checkIntervalTime = settingsViewModel.getCheckEventInterval();
         if (checkIntervalTime == 0) {
-            long result = settingsViewModel.insertSettings(new SettingsModel(28800000, 900000));
+            long result = settingsViewModel.insertSettings(new SettingsModel(28800000, 900000, ""));
             if (result != -1) {
                 Log.d("MainActivity onCreate", "Dodawanie domyślnych ustawień udane");
             } else {

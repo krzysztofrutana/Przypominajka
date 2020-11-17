@@ -68,6 +68,31 @@
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
 
     <string name="drawer_settings">Ustawienia</string>
+    <string name="interval_of_check_new_events">Częstotliwość sprawdzania nowych wydarzeń:</string>
+    <string name="time_settings">Ustawienia czasu</string>
+    <string name="backup_settings">Kopia zapasowa</string>
+    <string name="backup_location">Lokalizacja kopii zapasowej:</string>
 
+    <string-array name="backup_options">
+        <item>Dysk Google</item>
+        <item>Na telefonie</item>
+    </string-array>
 
+    <string-array name="restore_options">
+        <item>Dysk Google</item>
+        <item>Telefon</item>
+    </string-array>
+
+    <string name="backup_prompt">Wybierz lokalizację:</string>
+    <string name="configure">Skonfiguruj</string>
+    <string name="current_backup_settings">Aktualna konfiguracja:</string>
+    <string name="make_backup">Wykonaj kopię zapasową</string>
+    <string name="restore_backup_location">Przywróć kopię zapasową z:</string>
+    <string name="restore_backup_btn">Przywróć kopię zapasową</string>
+    <string name="dir">Folder:</string>
+    <string name="file_name">Nazwa pliku:</string>
+    <string name="save_settings">Zapisz ustawienia</string>
+    <string name="add_date_time_to_name">Dodaj aktualną datę i godzinę do nazwy</string>
+    <string name="database_name_prefix">.db</string>
+    <string name="write_name">wpisz nazwę</string>
 </resources>

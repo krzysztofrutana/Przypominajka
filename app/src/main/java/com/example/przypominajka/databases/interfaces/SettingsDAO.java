@@ -41,5 +41,9 @@ public interface SettingsDAO {
     @Query("SELECT COUNT(DEFAULT_TIME) FROM SETTINGS")
     LiveData<Integer> getRowCount();
 
+    @Query("SELECT LOCAL_BACKUP_LOCATION FROM SETTINGS")
+    LiveData<String> getLocalBackupLocation();
 
+    @Query("UPDATE SETTINGS SET LOCAL_BACKUP_LOCATION = :location")
+    int updateLocalBackupLocation(String location);
 }
