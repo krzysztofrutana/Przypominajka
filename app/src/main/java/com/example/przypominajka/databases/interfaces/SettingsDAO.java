@@ -42,7 +42,10 @@ public interface SettingsDAO {
     LiveData<Integer> getRowCount();
 
     @Query("SELECT LOCAL_BACKUP_LOCATION FROM SETTINGS")
-    LiveData<String> getLocalBackupLocation();
+    LiveData<String> getLocalBackupLocationLiveData();
+
+    @Query("SELECT LOCAL_BACKUP_LOCATION FROM SETTINGS")
+    String getLocalBackupLocation();
 
     @Query("UPDATE SETTINGS SET LOCAL_BACKUP_LOCATION = :location")
     int updateLocalBackupLocation(String location);

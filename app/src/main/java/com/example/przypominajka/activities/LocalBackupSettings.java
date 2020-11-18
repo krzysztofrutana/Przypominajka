@@ -74,7 +74,7 @@ public class LocalBackupSettings extends AppCompatActivity {
             this.finish();
         });
 
-        settingsViewModel.getLocalBackupLocation().observe(this, s -> {
+        settingsViewModel.getLocalBackupLocationLiveData().observe(this, s -> {
             if (s.equals("") || s == null) {
                 dirPathField.setVisibility(LinearLayout.GONE);
             } else {

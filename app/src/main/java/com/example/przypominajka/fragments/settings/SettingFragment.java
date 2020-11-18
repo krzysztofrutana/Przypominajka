@@ -1,30 +1,22 @@
 package com.example.przypominajka.fragments.settings;
 
-import android.app.AlertDialog;
-import android.app.DatePickerDialog;
+import android.app.Activity;
 import android.app.TimePickerDialog;
+import android.content.ContentResolver;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 
-import android.os.Environment;
-import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.Checkable;
-import android.widget.DatePicker;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -32,27 +24,25 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.przypominajka.R;
-import com.example.przypominajka.activities.AddNewEventActivity;
 import com.example.przypominajka.activities.LocalBackupSettings;
-import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
+import com.example.przypominajka.utils.FileUtil;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.Permissions;
+import com.example.przypominajka.utils.databaseBackupAndRestore.LocalBackupDatabase;
+import com.example.przypominajka.utils.databaseBackupAndRestore.RestoreLocalDatabase;
 import com.example.przypominajka.viewModels.SettingsViewModel;
 
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
+
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.w3c.dom.Text;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
-import java.util.TimeZone;
+import java.util.List;
 
-import yogesh.firzen.mukkiasevaigal.P;
 
 public class SettingFragment extends Fragment {
 
@@ -74,8 +64,9 @@ public class SettingFragment extends Fragment {
     TimePickerDialog timePickerDefaultTime;
     TimePickerDialog timePickerCheckInterval;
 
-    String outputFilePath;
-    String outputFileName;
+    private static final int PATH_REQUEST_CODE = 2;
+
+    private String fileToRestorePath;
 
     private final SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
 
@@ -171,7 +162,7 @@ public class SettingFragment extends Fragment {
         });
 
         currentBackupSettingsField = view.findViewById(R.id.current_backup_settings);
-        settingsViewModel.getLocalBackupLocation().observe(getViewLifecycleOwner(), s -> {
+        settingsViewModel.getLocalBackupLocationLiveData().observe(getViewLifecycleOwner(), s -> {
             if (s.equals("") || s == null) {
                 currentBackupSettingsField.setText("Przeprowadź konfigurację");
             } else {
@@ -180,7 +171,14 @@ public class SettingFragment extends Fragment {
             }
         });
         createBackupButton = view.findViewById(R.id.create_backup);
-        createBackupButton.setOnClickListener(v -> createBackup());
+        createBackupButton.setOnClickListener(v -> {
+            try {
+                createBackup();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d("SettingFragment createBackupButton", "Problem z stworzeniem backupu " + e.getMessage());
+            }
+        });
 
         restoreBackupButton = view.findViewById(R.id.restore_backup);
         restoreBackupButton.setOnClickListener(v -> restoreBackup());
@@ -194,17 +192,26 @@ public class SettingFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
     }
 
-    private void createBackup() {
+    private void createBackup() throws IOException {
         if (currentBackupSettingsField.getText() == "") {
             Toast.makeText(requireContext(), "Najpierw przeprwoadź konfigurację", Toast.LENGTH_SHORT).show();
+        } else {
+            if (backupLocalizationSpinner.getSelectedItem().toString().equals("Na telefonie")) {
+                Permissions.verifyStoragePermissions(getActivity());
+                LocalBackupDatabase localBackupDatabase = new LocalBackupDatabase(getContext(), getActivity());
+                localBackupDatabase.createBackup();
+            }
         }
-//        else{
-//            return;
-//        }
     }
 
     private void restoreBackup() {
-
+        if (restoreLocalizationSpinner.getSelectedItem().toString().equals("Telefon")) {
+            Permissions.verifyStoragePermissions(getActivity());
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setType("*/*");
+            startActivityForResult(Intent.createChooser(intent, "Wybierz plik"), PATH_REQUEST_CODE);
+        }
     }
 
     private void setBackupSettings() {
@@ -215,5 +222,41 @@ public class SettingFragment extends Fragment {
             Intent localSettings = new Intent(getContext(), LocalBackupSettings.class);
             startActivity(localSettings);
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PATH_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            Uri fileUri = data.getData();
+            try {
+                assert fileUri != null;
+                InputStream inputStream = getContext().getContentResolver().openInputStream(fileUri);
+                if (validFile(fileUri)) {
+                    RestoreLocalDatabase restoreLocalDatabase = new RestoreLocalDatabase(getContext(), getActivity());
+                    boolean result = restoreLocalDatabase.restoreBackup(inputStream);
+                    if (result) {
+                        Toast.makeText(getContext(), "Przywracanie bazy danych powiodło się", Toast.LENGTH_LONG).show();
+                        Log.d("SettingsFramgnent localRestore", "Przywracanie powiodło się");
+                    } else {
+                        Toast.makeText(getContext(), "Przywracanie bazy danych nie powiodło się", Toast.LENGTH_LONG).show();
+                        Log.d("SettingsFramgnent localRestore", "Przywracanie nie powiodło się");
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Wybrano niewłaściwy plik", Toast.LENGTH_LONG).show();
+                }
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean validFile(Uri fileUri) {
+        ContentResolver cr = getContext().getContentResolver();
+        String mime = cr.getType(fileUri);
+        return "application/octet-stream".equals(mime);
     }
 }
