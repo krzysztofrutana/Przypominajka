@@ -126,4 +126,24 @@ public class SettingsRepository {
         }
         return results;
     }
+
+    public int updateRemoteBackupFileName(String backupName) {
+        int results = -1;
+        try {
+            results = PrzypominajkaDatabase.databaseWriteExecutor.submit(() -> settingsDAO.updateRemoteBackupFileName(backupName)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
+    public String getRemoteBackupFileName() {
+        String results = "";
+        try {
+            results = PrzypominajkaDatabase.databaseWriteExecutor.submit(() -> settingsDAO.getRemoteBackupFileName()).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
 }

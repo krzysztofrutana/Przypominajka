@@ -15,7 +15,10 @@
         android:roundIcon="@mipmap/ic_przypominajka_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
+        <activity
+            android:name=".activities.RemoteBackupSettings"
+            android:label="Ustawienia kopii Dysku Google"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.LocalBackupSettings"
             android:label="Ustawienia kopii lokalnej"
@@ -35,7 +38,6 @@
             android:name=".activities.AddNewEventActivity"
             android:label="@string/add_event"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".activities.MainActivity"
             android:label="@string/app_name"

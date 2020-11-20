@@ -1,4 +1,4 @@
-package com.example.przypominajka.utils.databaseBackupAndRestore;
+package com.example.przypominajka.utils.databaseBackupAndRestore.BackupDatabase;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,8 +9,6 @@ import com.example.przypominajka.databases.PrzypominajkaDatabase;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.Permissions;
 import com.example.przypominajka.viewModels.SettingsViewModel;
-
-import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,14 +21,14 @@ public class LocalBackupDatabase {
 
     private static final String DB_NAME = "Przypominajka.db";
 
-    private Context context;
-    private String[] pathToCopy;
-    private Activity activity;
-    private SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+    private final Context context;
+    private final String[] pathToCopy;
+    private final Activity activity;
 
     public LocalBackupDatabase(Context context, Activity activity) {
         this.context = context;
         this.activity = activity;
+        SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
         pathToCopy = settingsViewModel.getLocalBackupLocation().split("\\|");
     }
 

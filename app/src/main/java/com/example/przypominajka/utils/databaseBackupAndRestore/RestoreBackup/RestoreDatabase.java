@@ -1,10 +1,9 @@
-package com.example.przypominajka.utils.databaseBackupAndRestore;
+package com.example.przypominajka.utils.databaseBackupAndRestore.RestoreBackup;
 
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.przypominajka.R;
 import com.example.przypominajka.databases.PrzypominajkaDatabase;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.Permissions;
@@ -18,18 +17,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 
-public class RestoreLocalDatabase {
+public class RestoreDatabase {
 
     private static final String DB_NAME = "Przypominajka.db";
 
-    private Context context;
-    private Activity activity;
-    private String path;
-    private SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+    private final Context context;
+    private final Activity activity;
 
-    public RestoreLocalDatabase(Context context, Activity activity) {
+    public RestoreDatabase(Context context, Activity activity) {
         this.context = context;
         this.activity = activity;
+
     }
 
     public boolean restoreBackup(InputStream inputStreamNewDB) {
@@ -38,6 +36,7 @@ public class RestoreLocalDatabase {
         przypominajkaDatabase.close();
 
         File oldDB = context.getDatabasePath(DB_NAME);
+
         if (inputStreamNewDB != null) {
             try {
                 FileChannel fromChannel = null;

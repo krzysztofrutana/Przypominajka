@@ -72,4 +72,12 @@ public class SettingsViewModel extends AndroidViewModel {
     public int updateLocalBackupLocation(String location) {
         return settingsRepository.updateLocalBackupLocation(location);
     }
+
+    public int updateRemoteBackupFileName(String backupName) {
+        return settingsRepository.updateRemoteBackupFileName(backupName);
+    }
+
+    public String getRemoteBackupFileName() {
+        return settingsRepository.getRemoteBackupFileName();
+    }
 }

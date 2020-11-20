@@ -49,4 +49,10 @@ public interface SettingsDAO {
 
     @Query("UPDATE SETTINGS SET LOCAL_BACKUP_LOCATION = :location")
     int updateLocalBackupLocation(String location);
+
+    @Query("UPDATE SETTINGS SET REMOTE_BACKUP_FILE_NAME = :backupName")
+    int updateRemoteBackupFileName(String backupName);
+
+    @Query("SELECT REMOTE_BACKUP_FILE_NAME FROM SETTINGS")
+    String getRemoteBackupFileName();
 }

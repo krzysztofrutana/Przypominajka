@@ -13,6 +13,7 @@ public class SettingsModel {
     private static final String DEFAULT_TIME = "DEFAULT_TIME";
     private static final String NOTIFY_CHECK_INTERVAL = "NOTIFY_CHECK_INTERVAL";
     private static final String LOCAL_BACKUP_LOCATION = "LOCAL_BACKUP_LOCATION";
+    private static final String REMOTE_BACKUP_FILE_NAME = "REMOTE_BACKUP_FILE_NAME";
 
     @PrimaryKey(autoGenerate = true)
     public int id;
@@ -26,14 +27,18 @@ public class SettingsModel {
     @ColumnInfo(name = LOCAL_BACKUP_LOCATION)
     public String localBackupLocation;
 
+    @ColumnInfo(name = REMOTE_BACKUP_FILE_NAME)
+    public String remoteBackupFileName;
+
     public SettingsModel() {
     }
 
     @Ignore
-    public SettingsModel(long defaultTime, long notifyCheckInterval, String localBackupLocation) {
+    public SettingsModel(long defaultTime, long notifyCheckInterval, String localBackupLocation, String remoteBackupFileName) {
         this.defaultTime = defaultTime;
         this.notifyCheckInterval = notifyCheckInterval;
         this.localBackupLocation = localBackupLocation;
+        this.remoteBackupFileName = remoteBackupFileName;
     }
 
     public long getDefaultTime() {
@@ -46,5 +51,9 @@ public class SettingsModel {
 
     public String getLocalBackupLocation() {
         return localBackupLocation;
+    }
+
+    public String getRemoteBackupFileName() {
+        return remoteBackupFileName;
     }
 }
