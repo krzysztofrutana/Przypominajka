@@ -68,7 +68,7 @@ The main window displays the author's calendar and a list of events for a specif
 <br /><br />
 <p align="center">
   <a href="https://github.com/krzysztofrutana/OCR-Desktop">
-    <img src="https://i.ibb.co/3NcrCC8/Screenshot-1603464352.png" width="400">
+    <img src="https://i.ibb.co/t4sHHMp/Screenshot-1605893072.png" width="400">
   </a>
 
 
@@ -109,6 +109,30 @@ Finally, the start date of the event is given.
   
 The window on the left allows you to view all saved events. After clicking on the selected event, it is possible to view its details and delete the selected event.
 
+<br />
+<br />
+<br />
+<br /><br />
+<p align="center">
+  <a href="https://github.com/krzysztofrutana/OCR-Desktop">
+    <img src="https://i.ibb.co/5RqhQnD/Screenshot-1605892912.png" width="400">
+    <img src="https://i.ibb.co/3fNRn31/Screenshot-1605892920.png" width="400">
+  </a>
+  
+ <p align="center">
+  <a href="https://github.com/krzysztofrutana/OCR-Desktop">
+    <img src="https://i.ibb.co/VqvZ1rN/Screenshot-1605892925.png" width="400">
+    <img src="https://i.ibb.co/YchkDKM/Screenshot-1605892963.png" width="400">
+  </a>
+  
+  <p align="center">
+  <a href="https://github.com/krzysztofrutana/OCR-Desktop">
+    <img src="https://i.ibb.co/SK6GryB/Screenshot-1605891196.png" width="400">
+    <img src="https://i.ibb.co/xfRgwwT/Screenshot-1605891682.png" width="400">
+  </a>
+  
+  The settings allow you to change the default notification time and the time interval for checking events and creating new notifications. This tab allows you to create a local backup on your phone or Google Drive and restore it.
+
 <!--Built With -->
 ### Built With
 
@@ -120,7 +144,7 @@ The window on the left allows you to view all saved events. After clicking on th
 <!--Plan for the future -->
 ## Plan for the future
 * For now only testing. In future maybe confirmation of doing something in current day, if not move event on other date.
-* Add full working backup and resotore options.
+* Add move event options.
 
 <!-- GETTING STARTED -->
 ## Getting Started
