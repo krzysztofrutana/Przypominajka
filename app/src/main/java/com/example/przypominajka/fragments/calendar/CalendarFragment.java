@@ -85,7 +85,7 @@ public class CalendarFragment extends Fragment {
 
     private EventListAdapter eventListAdapter;
 
-    private EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
+    private final EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
 
     LinearLayout previousClickedLinearLayout;
 

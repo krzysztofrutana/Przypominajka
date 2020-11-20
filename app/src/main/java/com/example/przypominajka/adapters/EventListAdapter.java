@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,7 +21,7 @@ import java.util.List;
 // new adapter for RecycleView, setList method to refresh view when data changed
 public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.ViewHolder> {
 
-    private Context context;
+    private final Context context;
     private List<EventModel> data = new ArrayList<>();
 
     public EventListAdapter(Context context) {

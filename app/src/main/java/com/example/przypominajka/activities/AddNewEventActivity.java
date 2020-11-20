@@ -6,8 +6,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.annotation.SuppressLint;
@@ -23,7 +21,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,21 +30,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
-//import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.ReminderBroadcast;
 import com.example.przypominajka.viewModels.EventsViewModel;
 import com.example.przypominajka.viewModels.NotificationViewModel;
@@ -67,6 +60,9 @@ import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class AddNewEventActivity extends AppCompatActivity {
 
+    //Strings
+    private static final String EVENT_EXIST = MyPrzypominajkaApp.get().getResources().getString(R.string.ANA_event_exist);
+    private static final String[] checkboxtexts = {"dzień", "dni", "tydzień", "tygodnie", "tygodni", "miesiąc", "miesiące", "miesięcy",};
 
     // Event name section
     private EditText eventNameField;
@@ -210,16 +206,12 @@ public class AddNewEventActivity extends AppCompatActivity {
                     ColorStateList colorStateList = ColorStateList.valueOf(Color.RED);
                     eventNameField.setTextColor(Color.RED);
                     eventNameField.setLinkTextColor(Color.RED);
-                    if (Build.VERSION.SDK_INT >= 21) {
-                        eventNameField.setBackgroundTintList(colorStateList);
-                    }
-                    eventNameWarningHintField.setText("Wydarzenie już istnieje");
+                    eventNameField.setBackgroundTintList(colorStateList);
+                    eventNameWarningHintField.setText(EVENT_EXIST);
                     eventNameWarningHintField.setTextColor(Color.RED);
                 } else {
                     ColorStateList colorStateList = ContextCompat.getColorStateList(context, R.color.colorAccent);
-                    if (Build.VERSION.SDK_INT >= 21) {
-                        eventNameField.setBackgroundTintList(colorStateList);
-                    }
+                    eventNameField.setBackgroundTintList(colorStateList);
                     eventNameField.setTextColor(Color.GRAY);
                     eventNameWarningHintField.setText("");
                 }
@@ -233,7 +225,7 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         // reset button background when activity starts working
         Button chooseColorButton = findViewById(R.id.buttonChooseColor);
-        Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius);
+        Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius_add_new_activity);
         assert unwrappedDrawable != null;
         Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
         DrawableCompat.setTint(wrappedDrawable, 0xE0E0E0);
@@ -252,7 +244,7 @@ public class AddNewEventActivity extends AppCompatActivity {
             public void onOk(AmbilWarnaDialog dialog, int color) {
                 defaultColor = color;
                 eventColorNumber = color;
-                Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius);
+                Drawable unwrappedDrawable = AppCompatResources.getDrawable(AddNewEventActivity.this, R.drawable.button_corner_radius_add_new_activity);
                 assert unwrappedDrawable != null;
                 Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
                 DrawableCompat.setTint(wrappedDrawable, eventColorNumber);
@@ -275,43 +267,37 @@ public class AddNewEventActivity extends AppCompatActivity {
         linearLayoutOneTimeSection.setVisibility(LinearLayout.GONE);
         linearLayoutCustomSection.setVisibility(LinearLayout.GONE);
         linearLayoutMonthSection.setVisibility(LinearLayout.GONE);
-        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                switch (checkedId) {
-                    case R.id.radioButtonCurrentDay:
-                        linearLayoutMonthSection.setVisibility(LinearLayout.VISIBLE);
-                        linearLayoutCustomSection.setVisibility(LinearLayout.GONE);
-                        linearLayoutOneTimeSection.setVisibility(LinearLayout.GONE);
-                        itsMonthInterval = true;
-                        itsCustomTimeInterval = false;
-                        itsOneTimeEvent = false;
-                        monthDefaultTimeCheckbox.setChecked(true);
-                        customTimeDefaultTimeCheckbox.setChecked(false);
-                        oneTimeDefaultTimeCheckbox.setChecked(false);
-                        break;
-                    case R.id.radioButtonJumpDay:
-                        linearLayoutCustomSection.setVisibility(LinearLayout.VISIBLE);
-                        linearLayoutMonthSection.setVisibility(LinearLayout.GONE);
-                        linearLayoutOneTimeSection.setVisibility(LinearLayout.GONE);
-                        itsMonthInterval = false;
-                        itsCustomTimeInterval = true;
-                        itsOneTimeEvent = false;
-                        monthDefaultTimeCheckbox.setChecked(false);
-                        customTimeDefaultTimeCheckbox.setChecked(true);
-                        oneTimeDefaultTimeCheckbox.setChecked(false);
-                        break;
-                    case R.id.radioButtonOneTime:
-                        linearLayoutCustomSection.setVisibility(LinearLayout.GONE);
-                        linearLayoutMonthSection.setVisibility(LinearLayout.GONE);
-                        linearLayoutOneTimeSection.setVisibility(LinearLayout.VISIBLE);
-                        itsMonthInterval = false;
-                        itsCustomTimeInterval = false;
-                        itsOneTimeEvent = true;
-                        monthDefaultTimeCheckbox.setChecked(false);
-                        customTimeDefaultTimeCheckbox.setChecked(false);
-                        oneTimeDefaultTimeCheckbox.setChecked(true);
-                        break;
-                }
+        rg.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radioButtonCurrentDay) {
+                linearLayoutMonthSection.setVisibility(LinearLayout.VISIBLE);
+                linearLayoutCustomSection.setVisibility(LinearLayout.GONE);
+                linearLayoutOneTimeSection.setVisibility(LinearLayout.GONE);
+                itsMonthInterval = true;
+                itsCustomTimeInterval = false;
+                itsOneTimeEvent = false;
+                monthDefaultTimeCheckbox.setChecked(true);
+                customTimeDefaultTimeCheckbox.setChecked(false);
+                oneTimeDefaultTimeCheckbox.setChecked(false);
+            } else if (checkedId == R.id.radioButtonJumpDay) {
+                linearLayoutCustomSection.setVisibility(LinearLayout.VISIBLE);
+                linearLayoutMonthSection.setVisibility(LinearLayout.GONE);
+                linearLayoutOneTimeSection.setVisibility(LinearLayout.GONE);
+                itsMonthInterval = false;
+                itsCustomTimeInterval = true;
+                itsOneTimeEvent = false;
+                monthDefaultTimeCheckbox.setChecked(false);
+                customTimeDefaultTimeCheckbox.setChecked(true);
+                oneTimeDefaultTimeCheckbox.setChecked(false);
+            } else if (checkedId == R.id.radioButtonOneTime) {
+                linearLayoutCustomSection.setVisibility(LinearLayout.GONE);
+                linearLayoutMonthSection.setVisibility(LinearLayout.GONE);
+                linearLayoutOneTimeSection.setVisibility(LinearLayout.VISIBLE);
+                itsMonthInterval = false;
+                itsCustomTimeInterval = false;
+                itsOneTimeEvent = true;
+                monthDefaultTimeCheckbox.setChecked(false);
+                customTimeDefaultTimeCheckbox.setChecked(false);
+                oneTimeDefaultTimeCheckbox.setChecked(true);
             }
         });
 
@@ -323,43 +309,34 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         monthDefaultTimeCheckbox = findViewById(R.id.checkboxMonthSectionlDefaultTime);
         monthSectionTimeOfEventField = findViewById(R.id.textMonthSectionTimeOfEvent);
-        monthDefaultTimeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    monthSectionTimeOfEventField.setVisibility(LinearLayout.GONE);
-                } else {
-                    monthSectionTimeOfEventField.setVisibility(LinearLayout.VISIBLE);
-                }
+        monthDefaultTimeCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                monthSectionTimeOfEventField.setVisibility(LinearLayout.GONE);
+            } else {
+                monthSectionTimeOfEventField.setVisibility(LinearLayout.VISIBLE);
             }
         });
 
-        monthSectionTimeOfEventField.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Use the current time as the default values for the picker
-                final Calendar c = Calendar.getInstance();
-                int hour = c.get(Calendar.HOUR_OF_DAY);
-                int minute = c.get(Calendar.MINUTE);
-                // Create a new instance of c
-                timePickerDialogitsMonthInterval = new TimePickerDialog(AddNewEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String minuteStringMonthSection;
-                        if (selectedMinute < 10) {
-                            minuteStringMonthSection = "0" + selectedMinute;
-                        } else {
-                            minuteStringMonthSection = String.valueOf(selectedMinute);
-                        }
-                        String time = selectedHour + ":" + minuteStringMonthSection;
-                        monthSectionTimeOfEventField.setText(time);
-                        monthSectionTimeOfEventField.setTextSize(18);
-                        monthDefaultTimeCheckbox.forceLayout();
-                    }
-                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
-                timePickerDialogitsMonthInterval.setTitle("Wybierz godzinę");
-                timePickerDialogitsMonthInterval.show();
-            }
+        monthSectionTimeOfEventField.setOnClickListener(view -> {
+            // Use the current time as the default values for the picker
+            final Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
+            // Create a new instance of c
+            timePickerDialogitsMonthInterval = new TimePickerDialog(AddNewEventActivity.this, (timePicker, selectedHour, selectedMinute) -> {
+                String minuteStringMonthSection;
+                if (selectedMinute < 10) {
+                    minuteStringMonthSection = "0" + selectedMinute;
+                } else {
+                    minuteStringMonthSection = String.valueOf(selectedMinute);
+                }
+                String time = selectedHour + ":" + minuteStringMonthSection;
+                monthSectionTimeOfEventField.setText(time);
+                monthSectionTimeOfEventField.setTextSize(18);
+                monthDefaultTimeCheckbox.forceLayout();
+            }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
+            timePickerDialogitsMonthInterval.setTitle("Wybierz godzinę");
+            timePickerDialogitsMonthInterval.show();
         });
 
     }
@@ -369,87 +346,97 @@ public class AddNewEventActivity extends AppCompatActivity {
         customTimeRepeatAllTimeChechbox = findViewById(R.id.checkboxCustomTimeRepeatsAllways);
         customTimeNumberOfRepeatsField = findViewById(R.id.editCustomTimeNumberOfRepeats);
         customTimeIntervalField = findViewById(R.id.editTextCustomTimeInterval);
+
         customTimeDayChechbox = findViewById(R.id.checkBoxCustomTimeDay);
         customTimeWeekChechbox = findViewById(R.id.checkBoxCustomTimeWeek);
         customTimeMonthChechbox = findViewById(R.id.checkBoxCustomTimeMonth);
-        customTimeDayChechbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    customTimeWeekChechbox.setChecked(false);
-                    customTimeMonthChechbox.setChecked(false);
-                }
+        customTimeDayChechbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                customTimeWeekChechbox.setChecked(false);
+                customTimeMonthChechbox.setChecked(false);
             }
         });
-        customTimeWeekChechbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    customTimeDayChechbox.setChecked(false);
-                    customTimeMonthChechbox.setChecked(false);
-                }
+        customTimeWeekChechbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                customTimeDayChechbox.setChecked(false);
+                customTimeMonthChechbox.setChecked(false);
             }
         });
-        customTimeMonthChechbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    customTimeDayChechbox.setChecked(false);
-                    customTimeWeekChechbox.setChecked(false);
-                }
+        customTimeMonthChechbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                customTimeDayChechbox.setChecked(false);
+                customTimeWeekChechbox.setChecked(false);
             }
         });
-        customTimeRepeatAllTimeChechbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+        customTimeIntervalField.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    customTimeNumberOfRepeatsField.setVisibility(LinearLayout.GONE);
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.toString().equals(String.valueOf(1))) {
+                    customTimeDayChechbox.setText(checkboxtexts[0]);
+                    customTimeWeekChechbox.setText(checkboxtexts[2]);
+                    customTimeMonthChechbox.setText(checkboxtexts[5]);
+                } else if (s.toString().equals(String.valueOf(2)) && s.toString().equals(String.valueOf(4))) {
+                    customTimeDayChechbox.setText(checkboxtexts[1]);
+                    customTimeWeekChechbox.setText(checkboxtexts[3]);
+                    customTimeMonthChechbox.setText(checkboxtexts[6]);
                 } else {
-                    customTimeNumberOfRepeatsField.setVisibility(LinearLayout.VISIBLE);
+                    customTimeDayChechbox.setText(checkboxtexts[1]);
+                    customTimeWeekChechbox.setText(checkboxtexts[4]);
+                    customTimeMonthChechbox.setText(checkboxtexts[7]);
                 }
+            }
+        });
+
+        customTimeRepeatAllTimeChechbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                customTimeNumberOfRepeatsField.setVisibility(LinearLayout.GONE);
+            } else {
+                customTimeNumberOfRepeatsField.setVisibility(LinearLayout.VISIBLE);
             }
         });
         customTimeDefaultTimeCheckbox = findViewById(R.id.checkboxCustomTimeDefaultTime);
         customTimeTimeOfEventField = findViewById(R.id.textCustomTimeEventTime);
-        customTimeDefaultTimeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    customTimeTimeOfEventField.setVisibility(LinearLayout.GONE);
-                } else {
-                    customTimeTimeOfEventField.setVisibility(LinearLayout.VISIBLE);
-                }
+        customTimeDefaultTimeCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                customTimeTimeOfEventField.setVisibility(LinearLayout.GONE);
+            } else {
+                customTimeTimeOfEventField.setVisibility(LinearLayout.VISIBLE);
             }
         });
 
-        customTimeTimeOfEventField.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Use the current time as the default values for the picker
-                final Calendar c = Calendar.getInstance();
-                int hour = c.get(Calendar.HOUR_OF_DAY);
-                int minute = c.get(Calendar.MINUTE);
-                // Create a new instance of c
-                timePickerDialogCustomTime = new TimePickerDialog(AddNewEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String minuteCustomTimeSection;
-                        if (selectedMinute < 10) {
-                            minuteCustomTimeSection = "0" + selectedMinute;
-                        } else {
-                            minuteCustomTimeSection = String.valueOf(selectedMinute);
-                        }
-                        String time = selectedHour + ":" + minuteCustomTimeSection;
-                        customTimeTimeOfEventField.setText(time);
-                        customTimeTimeOfEventField.setTextSize(18);
-                        customTimeDefaultTimeCheckbox.forceLayout(); // update view after resize textView
+        customTimeTimeOfEventField.setOnClickListener(view -> {
+            // Use the current time as the default values for the picker
+            final Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
+            // Create a new instance of c
+            timePickerDialogCustomTime = new TimePickerDialog(AddNewEventActivity.this, (timePicker, selectedHour, selectedMinute) -> {
+                String minuteCustomTimeSection;
+                if (selectedMinute < 10) {
+                    minuteCustomTimeSection = "0" + selectedMinute;
+                } else {
+                    minuteCustomTimeSection = String.valueOf(selectedMinute);
+                }
+                String time = selectedHour + ":" + minuteCustomTimeSection;
+                customTimeTimeOfEventField.setText(time);
+                customTimeTimeOfEventField.setTextSize(18);
+                customTimeDefaultTimeCheckbox.forceLayout(); // update view after resize textView
 
 
-                    }
-                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this)); //Yes 24 hour time
-                timePickerDialogCustomTime.setTitle("Wybierz godzinę");
-                timePickerDialogCustomTime.show();
-            }
+            }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this)); //Yes 24 hour time
+            timePickerDialogCustomTime.setTitle("Wybierz godzinę");
+            timePickerDialogCustomTime.show();
         });
     }
 
@@ -459,71 +446,56 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         oneTimeDefaultTimeCheckbox = findViewById(R.id.checkboxOneTimeDefaultTime);
         oneTimeEventTimeField = findViewById(R.id.textOneTimeTimeOfEvent);
-        oneTimeDefaultTimeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    oneTimeEventTimeField.setVisibility(LinearLayout.GONE);
-                } else {
-                    oneTimeEventTimeField.setVisibility(LinearLayout.VISIBLE);
-                }
+        oneTimeDefaultTimeCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                oneTimeEventTimeField.setVisibility(LinearLayout.GONE);
+            } else {
+                oneTimeEventTimeField.setVisibility(LinearLayout.VISIBLE);
             }
         });
 
         oneTimeEventDateField = findViewById(R.id.textViewOneTimeSectionSetDate);
         // show date picker dialog to set date
-        oneTimeEventDateField.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Calendar cal = Calendar.getInstance();
-                int year = cal.get(Calendar.YEAR);
-                int month = cal.get(Calendar.MONTH);
-                int day = cal.get(Calendar.DAY_OF_MONTH);
+        oneTimeEventDateField.setOnClickListener(v -> {
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialogOneTime = new DatePickerDialog(AddNewEventActivity.this,
-                        android.R.style.Theme_Holo_Light_Dialog_MinWidth,
-                        dateSetListenerOneTime, year, month, day);
-                Objects.requireNonNull(datePickerDialogOneTime.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                datePickerDialogOneTime.show();
-            }
+            DatePickerDialog datePickerDialogOneTime = new DatePickerDialog(AddNewEventActivity.this,
+                    android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                    dateSetListenerOneTime, year, month, day);
+            Objects.requireNonNull(datePickerDialogOneTime.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            datePickerDialogOneTime.show();
         });
 
-        dateSetListenerOneTime = new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                month = month + 1;
-                String choosenData = dayOfMonth + "." + month + "." + year;
-                oneTimeEventDateField.setText(choosenData);
-                oneTimeDate = choosenData;
-            }
+        dateSetListenerOneTime = (view, year, month, dayOfMonth) -> {
+            month = month + 1;
+            String choosenData = dayOfMonth + "." + month + "." + year;
+            oneTimeEventDateField.setText(choosenData);
+            oneTimeDate = choosenData;
         };
 
-        oneTimeEventTimeField.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Use the current time as the default values for the picker
-                final Calendar c = Calendar.getInstance();
-                int hour = c.get(Calendar.HOUR_OF_DAY);
-                int minute = c.get(Calendar.MINUTE);
-                // Create a new instance of c
-                timePickerDialogOneTime = new TimePickerDialog(AddNewEventActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String minuteOneTimeSection;
-                        if (selectedMinute < 10) {
-                            minuteOneTimeSection = "0" + selectedMinute;
-                        } else {
-                            minuteOneTimeSection = String.valueOf(selectedMinute);
-                        }
-                        String time = selectedHour + ":" + minuteOneTimeSection;
-                        oneTimeEventTimeField.setText(time);
-                        oneTimeEventTimeField.setTextSize(18);
-                        oneTimeDefaultTimeCheckbox.forceLayout();
-                    }
-                }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
-                timePickerDialogOneTime.setTitle("Wybierz godzinę");
-                timePickerDialogOneTime.show();
-            }
+        oneTimeEventTimeField.setOnClickListener(view -> {
+            // Use the current time as the default values for the picker
+            final Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
+            // Create a new instance of c
+            timePickerDialogOneTime = new TimePickerDialog(AddNewEventActivity.this, (timePicker, selectedHour, selectedMinute) -> {
+                String minuteOneTimeSection;
+                if (selectedMinute < 10) {
+                    minuteOneTimeSection = "0" + selectedMinute;
+                } else {
+                    minuteOneTimeSection = String.valueOf(selectedMinute);
+                }
+                String time = selectedHour + ":" + minuteOneTimeSection;
+                oneTimeEventTimeField.setText(time);
+                oneTimeEventTimeField.setTextSize(18);
+                oneTimeDefaultTimeCheckbox.forceLayout();
+            }, hour, minute, DateFormat.is24HourFormat(AddNewEventActivity.this));//Yes 24 hour time
+            timePickerDialogOneTime.setTitle("Wybierz godzinę");
+            timePickerDialogOneTime.show();
         });
     }
 
@@ -531,30 +503,24 @@ public class AddNewEventActivity extends AppCompatActivity {
 
         // show date picker dialog to set date
         displayEventDateField = findViewById(R.id.textViewSetStartDate);
-        displayEventDateField.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Calendar cal = Calendar.getInstance();
-                int year = cal.get(Calendar.YEAR);
-                int month = cal.get(Calendar.MONTH);
-                int day = cal.get(Calendar.DAY_OF_MONTH);
+        displayEventDateField.setOnClickListener(v -> {
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(AddNewEventActivity.this,
-                        android.R.style.Theme_Holo_Light_Dialog_MinWidth,
-                        dateSetListenerStartEventDate, year, month, day);
-                Objects.requireNonNull(datePickerDialog.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                datePickerDialog.show();
-            }
+            DatePickerDialog datePickerDialog = new DatePickerDialog(AddNewEventActivity.this,
+                    android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                    dateSetListenerStartEventDate, year, month, day);
+            Objects.requireNonNull(datePickerDialog.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            datePickerDialog.show();
         });
 
-        dateSetListenerStartEventDate = new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                month = month + 1;
-                String choosenData = dayOfMonth + "." + month + "." + year;
-                displayEventDateField.setText(choosenData);
-                startEventDate = choosenData;
-            }
+        dateSetListenerStartEventDate = (view, year, month, dayOfMonth) -> {
+            month = month + 1;
+            String choosenData = dayOfMonth + "." + month + "." + year;
+            displayEventDateField.setText(choosenData);
+            startEventDate = choosenData;
         };
     }
 

@@ -108,7 +108,7 @@
                         android:id="@+id/buttonColorDetails"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:background="@drawable/button_corner_radius"
+                        android:background="@drawable/button_corner_radius_add_new_activity"
                         android:bottomLeftRadius="50dp"
                         android:bottomRightRadius="50dp"
                         android:gravity="right|end"

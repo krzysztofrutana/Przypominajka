@@ -95,4 +95,29 @@
     <string name="add_date_time_to_name">Dodaj aktualną datę i godzinę do nazwy</string>
     <string name="database_name_prefix">.db</string>
     <string name="write_name">wpisz nazwę</string>
+
+    //Settings fragment
+    <string name="SF_do_configuration">Przeprowadź konfigurację</string>
+    <string name="SF_choose_configuration">wybierz czas</string>
+    <string name="SF_logged_in_as">Zalogowany jako: </string>
+
+    //AddNewActivity
+    <string name="ANA_event_exist">Wydarzenie już istnieje</string>
+
+    //Event details activity
+    <string name="EVA_absence">Brak</string>
+    <string name="EVA_always_remind_what">Przypominaj zawsze co</string>
+    <string name="EVA_remind_what">Przypominaj zawsze co</string>
+    <string name="EVA_one_time">Jednorazowo</string>
+
+    //Local backup settings
+    <string name="LBS_change_folder">Zmień folder</string>
+
+    //Remote backup settings
+    <string name="RBS_logged_in">Zalogowano</string>
+    <string name="RBS_logged_out">Nie zalogowano</string>
+    <string name="RBS_log_in">Zaloguj</string>
+    <string name="RBS_log_out">Wyloguj</string>
+    <string name="make_backup_section">Stwórz kopię zapasową</string>
+
 </resources>

@@ -19,22 +19,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
 import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.ReminderBroadcast;
 import com.example.przypominajka.viewModels.EventsViewModel;
 import com.example.przypominajka.viewModels.NotificationViewModel;
-import com.example.przypominajka.viewModels.SettingsViewModel;
 
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 
 import java.util.List;
@@ -42,22 +37,27 @@ import java.util.List;
 
 public class EventDetailsActivity extends AppCompatActivity {
 
-    String eventName;
+    //Strings
+    private static final String ABSENCE = MyPrzypominajkaApp.get().getResources().getString(R.string.EVA_absence);
+    private static final String ALWAYS_REMIND_WHAT = MyPrzypominajkaApp.get().getResources().getString(R.string.EVA_always_remind_what);
+    private static final String REMIND_WHAT = MyPrzypominajkaApp.get().getResources().getString(R.string.EVA_remind_what);
+    private static final String ONE_TIME = MyPrzypominajkaApp.get().getResources().getString(R.string.EVA_one_time);
 
-    EventModel event = new EventModel();
-    TextView eventNameView;
-    TextView eventDiscriptionView;
-    Button colorButtonView;
-    TextView eventTypeViewPart1;
-    TextView eventTypeViewPart2;
-    TextView eventTypeViewPart3;
-    TextView eventTimeView;
-    TextView startDateView;
+    private String eventName;
 
-    private NotificationViewModel notificationViewModel = new NotificationViewModel(getApplication());
-    private EventsViewModel eventsViewModel = new EventsViewModel(getApplication());
-    private SettingsViewModel settingsViewModel = new SettingsViewModel(getApplication());
+    private EventModel event = new EventModel();
 
+    private TextView eventNameView;
+    private TextView eventDiscriptionView;
+    private Button colorButtonView;
+    private TextView eventTypeViewPart1;
+    private TextView eventTypeViewPart2;
+    private TextView eventTypeViewPart3;
+    private TextView eventTimeView;
+    private TextView startDateView;
+
+    private final NotificationViewModel notificationViewModel = new NotificationViewModel(getApplication());
+    private final EventsViewModel eventsViewModel = new EventsViewModel(getApplication());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +68,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbarEventDetails);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
         actionBar.setDisplayHomeAsUpEnabled(true);
 
 
@@ -100,52 +101,52 @@ public class EventDetailsActivity extends AppCompatActivity {
     @SuppressLint("ShowToast")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.delete_event:
-                // deleting event
-                // TODO , i don't know why, but this dont work correctly, notify still is being send to BroadcastReceiver class\
-                try {
-                    List<NotificationModel> notificationList = notificationViewModel.getNoCompletedNotification(eventName).getValue();
-                    int result = eventsViewModel.deleteEvent(eventsViewModel.findByEventName(eventName));
-                    if (result > 0) {
-                        for (NotificationModel notification : notificationList) {
-                            int resultDelete = notificationViewModel.delete(notification);
-                            if (resultDelete > 0) {
-                                Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
-                                notificationIntent.putExtra("NOTIFY_TEXT", eventName);
-                                notificationIntent.putExtra("ID", notification.getNotificationID());
+        if (item.getItemId() == R.id.delete_event) {
+            // deleting event
+            // TODO , i don't know why, but this dont work correctly, notify still is being send to BroadcastReceiver class\
+            try {
+                List<NotificationModel> notificationList = notificationViewModel.getNoCompletedNotification(eventName).getValue();
+                int result = eventsViewModel.deleteEvent(eventsViewModel.findByEventName(eventName));
+                if (result > 0) {
+                    assert notificationList != null;
+                    for (NotificationModel notification : notificationList) {
+                        int resultDelete = notificationViewModel.delete(notification);
+                        if (resultDelete > 0) {
+                            Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+                            notificationIntent.putExtra("NOTIFY_TEXT", eventName);
+                            notificationIntent.putExtra("ID", notification.getNotificationID());
 
-                                PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                                        notification.getNotificationID(),
-                                        notificationIntent,
-                                        PendingIntent.FLAG_UPDATE_CURRENT);
+                            PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                                    notification.getNotificationID(),
+                                    notificationIntent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT);
 
-                                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                                alarmManager.cancel(alarmIntent);
+                            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                            alarmManager.cancel(alarmIntent);
 
-                                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                                manager.cancel(notification.getNotificationID());
-                            }
+                            NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                            manager.cancel(notification.getNotificationID());
                         }
-                        Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
-                        this.finish();
-                        return true;
-                    } else {
-                        Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
-                        Log.w("Delete_event", "Problem przy usuwanie zdarzenia");
-                        return false;
                     }
-                } catch (Exception e) {
+                    Toast.makeText(this, "Zdarzenie usunięte pomyślnie", Toast.LENGTH_LONG).show();
+                    this.finish();
+                    return true;
+                } else {
                     Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
-                    Log.w("Delete_event", "Problem przy usuwanie zdarzenia " + e.getMessage());
+                    Log.w("Delete_event", "Problem przy usuwanie zdarzenia");
                     return false;
                 }
-                // back button on toolbar action
-            case android.R.id.home:
-                super.onBackPressed();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+            } catch (Exception e) {
+                Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
+                Log.w("Delete_event", "Problem przy usuwanie zdarzenia " + e.getMessage());
+                return false;
+            }
+            // back button on toolbar action
+        } else if (item.getItemId() == android.R.id.home) {
+            super.onBackPressed();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 
@@ -154,11 +155,12 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         eventNameView.setText(eventName.replaceAll("_", " "));
         if (event.getEventDiscription().length() == 0) {
-            eventDiscriptionView.setText("Brak");
+            eventDiscriptionView.setText(ABSENCE);
         } else {
             eventDiscriptionView.setText(event.getEventDiscription());
         }
-        Drawable unwrappedDrawable = AppCompatResources.getDrawable(EventDetailsActivity.this, R.drawable.button_corner_radius);
+        Drawable unwrappedDrawable = AppCompatResources.getDrawable(EventDetailsActivity.this, R.drawable.button_corner_radius_add_new_activity);
+        assert unwrappedDrawable != null;
         Drawable wrappedDrawable = DrawableCompat.wrap(unwrappedDrawable);
         DrawableCompat.setTint(wrappedDrawable, event.getEventColor());
         colorButtonView.setBackground(wrappedDrawable);
@@ -178,11 +180,11 @@ public class EventDetailsActivity extends AppCompatActivity {
             eventTypeViewPart2.setText(eventTypeMonthIntervalPart2);
             eventTypeViewPart3.setText(eventTypeMonthIntervalPart3);
         } else if (event.getItCustomTimeInterval()) {
-            String eventTypeShortInterval = "";
+            String eventTypeShortInterval;
             if (event.getItsCustomTimeRepeatsAllTime()) {
-                eventTypeViewPart1.setText("Przypominaj zawsze co");
+                eventTypeViewPart1.setText(ALWAYS_REMIND_WHAT);
             } else {
-                eventTypeViewPart1.setText("Przypominaj co");
+                eventTypeViewPart1.setText(REMIND_WHAT);
             }
             if (event.getCustomTimeType() == 1) {
                 if (event.getTimeInterval() == 1) {
@@ -283,7 +285,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 }
             }
         } else if (event.getItsOneTimeEvent()) {
-            eventTypeViewPart1.setText("Jednorazowo");
+            eventTypeViewPart1.setText(ONE_TIME);
             eventTypeViewPart2.setText(event.getOneTimeEventDate().toString(DateTimeFormat.forPattern("dd.MM.YYYY")));
         }
         eventTimeView.setText(event.getEventTime().toString(DateTimeFormat.forPattern("HH:mm")));

@@ -48,14 +48,11 @@ public class EventsFragment extends Fragment {
 
         taskListViewModel = new ViewModelProvider(this).get(EventsViewModel.class);
         View v = inflater.inflate(R.layout.fragment_events, container, false);
-        fab = (FloatingActionButton) v.findViewById(R.id.floating_action_button);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(context, AddNewEventActivity.class);
-                startActivity(intent);
-                adapter.notifyDataSetChanged();
-            }
+        fab = v.findViewById(R.id.floating_action_button);
+        fab.setOnClickListener(view -> {
+            Intent intent = new Intent(context, AddNewEventActivity.class);
+            startActivity(intent);
+            adapter.notifyDataSetChanged();
         });
 
         return v;
@@ -92,28 +89,7 @@ public class EventsFragment extends Fragment {
     public void showAllEventList() {
 
         taskListViewModel.getAllEvents()
-                .observe(getViewLifecycleOwner(), new Observer<List<EventModel>>() {
-                    @Override
-                    public void onChanged(List<EventModel> eventModels) {
-                        adapter.setList(eventModels);
-                    }
-                });
+                .observe(getViewLifecycleOwner(), eventModels -> adapter.setList(eventModels));
 
-//        List<Eve> events = przypominajkaDatabaseHelper.getAllEvent();
-//        if (events == null) {
-//            Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
-//            Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
-//            return;
-//        }
-//        eventArray.clear();
-//        if (events.size() > 0) {
-//
-//            eventArray.addAll(events);
-//            adapter = new EventListAdapter(context, eventArray);
-//            eventList.setAdapter(adapter);
-//        } else {
-//            adapter = new EventsListColorAdapter(context, R.layout.row_list, eventArray);
-//            eventList.setAdapter(adapter);
-//        }
     }
 }
