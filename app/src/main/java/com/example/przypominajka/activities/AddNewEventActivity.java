@@ -6,7 +6,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.lifecycle.ViewModelProvider;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
@@ -32,6 +31,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,12 +39,14 @@ import android.widget.Toast;
 import com.example.przypominajka.R;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.databases.entities.IntentModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.ReminderBroadcast;
-import com.example.przypominajka.viewModels.EventsViewModel;
-import com.example.przypominajka.viewModels.NotificationViewModel;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.EventsViewModel;
+import com.example.przypominajka.databases.viewModels.IntentsViewModel;
+import com.example.przypominajka.databases.viewModels.NotificationViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -116,11 +118,19 @@ public class AddNewEventActivity extends AppCompatActivity {
 
     private boolean itsEventDefaultTime;
 
-    //View models
-    private SettingsViewModel settingsViewModel;
-    private EventsViewModel eventsViewModel;
-    private NotificationViewModel notificationViewModel;
+    private Button buttonSaveEvent;
 
+    //View models
+    private final SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+    private final EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
+    private final NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
+    private final IntentsViewModel intentsViewModel = new IntentsViewModel(MyPrzypominajkaApp.get());
+
+    private boolean canBeSave;
+
+    final Context context = this;
+
+    private static final String TAG = "AddNewEventActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,9 +144,8 @@ public class AddNewEventActivity extends AppCompatActivity {
         assert actionBar != null;
         actionBar.setDisplayHomeAsUpEnabled(true);
 
-        settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
-        eventsViewModel = new ViewModelProvider(this).get(EventsViewModel.class);
-        notificationViewModel = new ViewModelProvider(this).get(NotificationViewModel.class);
+        canBeSave = false;
+
         // event name
         eventNameSectionProperties();
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -170,6 +179,18 @@ public class AddNewEventActivity extends AppCompatActivity {
         startDateSectionProperties();
         ////////////////////////////////////////////////////////////////////////////////////////////
 
+        buttonSaveEvent = findViewById(R.id.buttonSaveAndStartEvent);
+        buttonSaveEvent.setOnClickListener(v -> {
+            if (canBeSave) {
+                boolean checkIfItsCorrect = checkIfNotNull();
+                if (checkIfItsCorrect) {
+                    SaveEventTask task = new SaveEventTask(context);
+                    task.execute();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "Pola nie są poprawnie wypełnione", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     // back to previous window when back button on toolbar is clicked
@@ -186,8 +207,6 @@ public class AddNewEventActivity extends AppCompatActivity {
         eventNameField = findViewById(R.id.editTextEventName);
         eventNameWarningHintField = findViewById(R.id.text_hint);
 
-
-        final Context context = this;
         eventNameField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -201,20 +220,33 @@ public class AddNewEventActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+                if (s.toString().length() == 0) {
+                    buttonSaveEvent.setEnabled(false);
+                }
                 EventModel event = eventsViewModel.findByEventName(s.toString().replaceAll(" ", "_"));
                 if (event != null) {
-                    ColorStateList colorStateList = ColorStateList.valueOf(Color.RED);
-                    eventNameField.setTextColor(Color.RED);
-                    eventNameField.setLinkTextColor(Color.RED);
-                    eventNameField.setBackgroundTintList(colorStateList);
-                    eventNameWarningHintField.setText(EVENT_EXIST);
-                    eventNameWarningHintField.setTextColor(Color.RED);
+                    setEventNameFieldAndHint(true, EVENT_EXIST);
+                    canBeSave = false;
                 } else {
-                    ColorStateList colorStateList = ContextCompat.getColorStateList(context, R.color.colorAccent);
-                    eventNameField.setBackgroundTintList(colorStateList);
-                    eventNameField.setTextColor(Color.GRAY);
-                    eventNameWarningHintField.setText("");
+                    setEventNameFieldAndHint(false, "");
+                    canBeSave = true;
                 }
+                if (s.toString().length() >= 1)
+                    try {
+                        Double num = Double.parseDouble(s.toString());
+                        setEventNameFieldAndHint(true, "Nazwa nie może być liczbą");
+                        canBeSave = false;
+                    } catch (NumberFormatException e) {
+                        char c = s.toString().charAt(0);
+                        boolean isDigit = (c >= '0' && c <= '9');
+                        if (isDigit) {
+                            setEventNameFieldAndHint(true, "Nazwa nie może zaczynać sie cyfrą");
+                            canBeSave = false;
+                        } else {
+                            setEventNameFieldAndHint(false, "");
+                            canBeSave = true;
+                        }
+                    }
             }
         });
     }
@@ -354,18 +386,21 @@ public class AddNewEventActivity extends AppCompatActivity {
             if (isChecked) {
                 customTimeWeekChechbox.setChecked(false);
                 customTimeMonthChechbox.setChecked(false);
+                customTimeType = 1;
             }
         });
         customTimeWeekChechbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 customTimeDayChechbox.setChecked(false);
                 customTimeMonthChechbox.setChecked(false);
+                customTimeType = 2;
             }
         });
         customTimeMonthChechbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 customTimeDayChechbox.setChecked(false);
                 customTimeWeekChechbox.setChecked(false);
+                customTimeType = 3;
             }
         });
 
@@ -386,7 +421,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                     customTimeDayChechbox.setText(checkboxtexts[0]);
                     customTimeWeekChechbox.setText(checkboxtexts[2]);
                     customTimeMonthChechbox.setText(checkboxtexts[5]);
-                } else if (s.toString().equals(String.valueOf(2)) && s.toString().equals(String.valueOf(4))) {
+                } else if (Integer.parseInt(s.toString()) >= 2 && Integer.parseInt(s.toString()) <= 4) {
                     customTimeDayChechbox.setText(checkboxtexts[1]);
                     customTimeWeekChechbox.setText(checkboxtexts[3]);
                     customTimeMonthChechbox.setText(checkboxtexts[6]);
@@ -529,13 +564,6 @@ public class AddNewEventActivity extends AppCompatActivity {
     // make new AsyncTask class with split saveEvent method to do this with ProgressDialog
     // AsyncTask in API 30 is deprecated so TODO for new API
 
-    // using DateTimeZone as Universal repair bugs with Time Zone when set Alarm on current time
-    public void buttonSaveNewEvent(View view) {
-
-        SaveEventTask task = new SaveEventTask(this);
-        task.execute();
-    }
-
     @SuppressLint("StaticFieldLeak")
     private final class SaveEventTask extends AsyncTask<Void, Void, Void> {
         ProgressDialog dialog;
@@ -557,10 +585,6 @@ public class AddNewEventActivity extends AppCompatActivity {
             dialog.setCancelable(false);
             dialog.show();
 
-            if (eventNameWarningHintField.getText().toString().equals("Wydarzenie już istnieje")) {
-                Toast.makeText(context, "Podaj inną nazwę wydarzenia", Toast.LENGTH_LONG).show();
-                return;
-            }
 
             startDateLocalData = LocalDate.parse(startEventDate, DateTimeFormat.forPattern("dd.MM.YYYY"));
             LocalDate oneTimeEventDate;
@@ -575,17 +599,18 @@ public class AddNewEventActivity extends AppCompatActivity {
             }
             if (itsMonthInterval) {
                 timeIntervalNumber = Integer.parseInt(monthWhichDayField.getText().toString());
+                if (timeIntervalNumber == 0) {
+                    Toast.makeText(context, "Numer dnia nie może być 0", Toast.LENGTH_LONG).show();
+                    return;
+                } else if (timeIntervalNumber > 31) {
+                    Toast.makeText(context, "Miesiąc ma maksymalnie 31 dni.", Toast.LENGTH_LONG).show();
+                    return;
+                }
             }
             if (itsOneTimeEvent) {
                 timeIntervalNumber = 0;
             }
-            if (customTimeDayChechbox.isChecked()) {
-                customTimeType = 1;
-            } else if (customTimeWeekChechbox.isChecked()) {
-                customTimeType = 2;
-            } else if (customTimeMonthChechbox.isChecked()) {
-                customTimeType = 3;
-            }
+
             int monthNumberOfRepeats;
             if (monthNumberOfRepeatsField.getText().toString().length() > 0) {
                 monthNumberOfRepeats = Integer.parseInt(monthNumberOfRepeatsField.getText().toString());
@@ -618,6 +643,10 @@ public class AddNewEventActivity extends AppCompatActivity {
                         eventTime = time.getMillisOfDay();
                     }
                 }
+                if (monthNumberOfRepeats == 0) {
+                    Toast.makeText(context, "Liczba powtórzeń musi być większa od 0", Toast.LENGTH_LONG).show();
+                    return;
+                }
             } else if (itsCustomTimeInterval) {
                 if (customTimeDefaultTimeCheckbox.isChecked()) {
                     itsEventDefaultTime = true;
@@ -649,10 +678,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                     }
                 }
             }
-            boolean checkIfItsCorrect = checkIfNotNull();
-            if (!checkIfItsCorrect) {
-                return;
-            }
+
             newEvent = new EventModel(eventNameField.getText().toString(),
                     eventDiscriptionField.getText().toString(),
                     eventColorNumber,
@@ -708,8 +734,8 @@ public class AddNewEventActivity extends AppCompatActivity {
 
                 int notifyAndPendingIntentID;
                 if (eventID != -1) {
-                    notifyAndPendingIntentID = Integer.parseInt(String.valueOf(eventID) +
-                            String.valueOf(tempEventTime.getDayOfYear()) + String.valueOf(yearShort));
+                    notifyAndPendingIntentID = Integer.parseInt(eventID +
+                            String.valueOf(tempEventTime.getDayOfYear()) + yearShort);
                     Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
                     notificationIntent.putExtra("NOTIFY_TEXT", eventNameField.getText().toString());
                     notificationIntent.putExtra("ID", notifyAndPendingIntentID);
@@ -718,6 +744,16 @@ public class AddNewEventActivity extends AppCompatActivity {
                             notifyAndPendingIntentID,
                             notificationIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
+
+                    IntentModel intentModel = new IntentModel("PendingIntent", eventNameField.getText().toString(), notifyAndPendingIntentID, true,
+                            tempEventTime.getMillis());
+                    long resultInsertIntent = intentsViewModel.insertIntent(intentModel);
+                    if (resultInsertIntent != -1) {
+                        Log.d(TAG, "saveEvent: Dodano intencje dla " + eventNameField.getText().toString() + ", ID: " + notifyAndPendingIntentID
+                                + ", Data: " + tempEventTime.toLocalDate().toString());
+                    } else {
+                        Log.d(TAG, "saveEvent: Nie udało się dodać informacji o intencji");
+                    }
                 } else {
                     Log.d("AddNewEvent", "Problem z pobraniem ID wydarzenia z bazy");
                     return;
@@ -741,7 +777,7 @@ public class AddNewEventActivity extends AppCompatActivity {
                 }
             } else {
                 Toast.makeText(context, "Wystąpił problem podczas dodawania zdarzenia", Toast.LENGTH_SHORT).show();
-                Log.d("AddNewActivity InsertEvent", "Dodawanie wydarzenia zwróciło " + String.valueOf(result));
+                Log.d("AddNewActivity InsertEvent", "Dodawanie wydarzenia zwróciło " + result);
             }
 
             super.onPostExecute(aVoid);
@@ -752,6 +788,10 @@ public class AddNewEventActivity extends AppCompatActivity {
 
     // method to check everything field to avoid empty or null values
     private boolean checkIfNotNull() {
+        RadioButton itsMonthIntervalRadioButton = findViewById(R.id.radioButtonCurrentDay);
+        RadioButton itsCustomTimeIntervalRadioButton = findViewById(R.id.radioButtonJumpDay);
+        RadioButton itsOneTimeEventRadioButton = findViewById(R.id.radioButtonOneTime);
+
         if (eventNameField.getText().toString().equals("")) {
             Toast.makeText(this, "Nie podano nazwy", Toast.LENGTH_LONG).show();
             return false;
@@ -802,7 +842,27 @@ public class AddNewEventActivity extends AppCompatActivity {
                 Toast.makeText(this, "Nie wybrano daty rozpoczęcia zdarzenia", Toast.LENGTH_LONG).show();
                 return false;
             }
+        } else if (!itsMonthIntervalRadioButton.isChecked() && !itsCustomTimeIntervalRadioButton.isChecked() && !itsOneTimeEventRadioButton.isChecked()) {
+            Toast.makeText(this, "Nie wybrano typu wydarzenia", Toast.LENGTH_LONG).show();
+            return false;
         }
         return true;
+    }
+
+    private void setEventNameFieldAndHint(boolean isWrong, String hintText) {
+        if (isWrong) {
+            ColorStateList colorStateList = ColorStateList.valueOf(Color.RED);
+            eventNameField.setTextColor(Color.RED);
+            eventNameField.setLinkTextColor(Color.RED);
+            eventNameField.setBackgroundTintList(colorStateList);
+            eventNameWarningHintField.setText(hintText);
+            eventNameWarningHintField.setTextColor(Color.RED);
+        } else {
+            ColorStateList colorStateList = ContextCompat.getColorStateList(getApplicationContext(), R.color.colorAccent);
+            eventNameField.setBackgroundTintList(colorStateList);
+            eventNameField.setTextColor(Color.GRAY);
+            eventNameWarningHintField.setText(hintText);
+            buttonSaveEvent.setEnabled(true);
+        }
     }
 }

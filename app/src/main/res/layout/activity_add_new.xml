@@ -813,7 +813,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/save_event"
-                    android:onClick="buttonSaveNewEvent"
                     android:background="@drawable/button_save_event" />
             </LinearLayout>
 
