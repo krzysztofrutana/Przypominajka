@@ -7,9 +7,11 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.databases.entities.IntentModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.databases.entities.SettingsModel;
 import com.example.przypominajka.databases.interfaces.EventsDAO;
+import com.example.przypominajka.databases.interfaces.IntentsDAO;
 import com.example.przypominajka.databases.interfaces.NotificationDAO;
 import com.example.przypominajka.databases.interfaces.SettingsDAO;
 
@@ -17,7 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 // abstract class to create instance of Room database
-@Database(entities = {EventModel.class, NotificationModel.class, SettingsModel.class}, version = 1)
+@Database(entities = {EventModel.class, NotificationModel.class, SettingsModel.class, IntentModel.class}, version = 1)
 public abstract class PrzypominajkaDatabase extends RoomDatabase {
 
     public abstract EventsDAO eventsDAO();
@@ -25,6 +27,8 @@ public abstract class PrzypominajkaDatabase extends RoomDatabase {
     public abstract NotificationDAO notificationDAO();
 
     public abstract SettingsDAO settingsDAO();
+
+    public abstract IntentsDAO intentsDAO();
 
     private static final String DB_NAME = "Przypominajka.db";
 

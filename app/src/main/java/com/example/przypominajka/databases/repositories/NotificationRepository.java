@@ -5,7 +5,6 @@ import android.app.Application;
 import androidx.lifecycle.LiveData;
 
 import com.example.przypominajka.databases.PrzypominajkaDatabase;
-import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.databases.interfaces.NotificationDAO;
 
@@ -39,6 +38,16 @@ public class NotificationRepository {
         return results;
     }
 
+    public int updateNotification(final NotificationModel notificationModel) {
+        int results = -1;
+        try {
+            results = PrzypominajkaDatabase.databaseWriteExecutor.submit(() -> notificationDAO.update(notificationModel)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
     public int delete(final NotificationModel notificationModel) {
         int results = -1;
         try {
@@ -64,8 +73,18 @@ public class NotificationRepository {
         return notificationModel;
     }
 
-    public LiveData<List<NotificationModel>> getNoCompletedNotification(String notificationEventName) {
-        return notificationDAO.getNoCompletedNotification(notificationEventName);
+    public LiveData<List<NotificationModel>> getNoCompletedNotificationLiveData(String notificationEventName) {
+        return notificationDAO.getNoCompletedNotificationLiveData(notificationEventName);
+    }
+
+    public List<NotificationModel> getNoCompletedNotificationList(String notificationEventName) {
+        List<NotificationModel> notificationModelList = new ArrayList<>();
+        try {
+            notificationModelList = PrzypominajkaDatabase.databaseWriteExecutor.submit(() -> notificationDAO.getNoCompletedNotificationList(notificationEventName)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return notificationModelList;
     }
 
     public int updateNotificationCompleted(final String notificationName, final long notificationDate, final boolean notificationCompleted) {

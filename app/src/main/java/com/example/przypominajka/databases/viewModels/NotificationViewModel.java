@@ -1,4 +1,4 @@
-package com.example.przypominajka.viewModels;
+package com.example.przypominajka.databases.viewModels;
 
 import android.app.Application;
 
@@ -31,6 +31,10 @@ public class NotificationViewModel extends AndroidViewModel {
         return notificationRepository.insertNotification(notificationModel);
     }
 
+    public int updateNotification(NotificationModel notificationModel) {
+        return notificationRepository.updateNotification(notificationModel);
+    }
+
     public int delete(NotificationModel notificationModel) {
         return notificationRepository.delete(notificationModel);
     }
@@ -39,8 +43,12 @@ public class NotificationViewModel extends AndroidViewModel {
         return notificationRepository.findByEventName(notificationEventName);
     }
 
-    public LiveData<List<NotificationModel>> getNoCompletedNotification(String notificationEventName) {
-        return notificationRepository.getNoCompletedNotification(notificationEventName);
+    public LiveData<List<NotificationModel>> getNoCompletedNotificationLiveData(String notificationEventName) {
+        return notificationRepository.getNoCompletedNotificationLiveData(notificationEventName);
+    }
+
+    public List<NotificationModel> getNoCompletedNotificationList(String notificationEventName) {
+        return notificationRepository.getNoCompletedNotificationList(notificationEventName);
     }
 
     public int updateNotificationCompleted(String notificationName, long notificationDate, boolean notificationCompleted) {

@@ -5,6 +5,7 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.example.przypominajka.databases.entities.NotificationModel;
 
@@ -19,6 +20,9 @@ public interface NotificationDAO {
     @Insert
     long insertNotification(NotificationModel notification);
 
+    @Update
+    int update(NotificationModel notification);
+
     @Delete
     int delete(NotificationModel notification);
 
@@ -29,7 +33,10 @@ public interface NotificationDAO {
     NotificationModel findByEventName(String notificationEventName);
 
     @Query("SELECT * FROM  NOTIFICATIONS  WHERE  NOTIFICATION_EVENT_NAME LIKE :notificationEventName  AND  NOTIFICATION_COMPLETED  = 0")
-    LiveData<List<NotificationModel>> getNoCompletedNotification(String notificationEventName);
+    LiveData<List<NotificationModel>> getNoCompletedNotificationLiveData(String notificationEventName);
+
+    @Query("SELECT * FROM  NOTIFICATIONS  WHERE  NOTIFICATION_EVENT_NAME LIKE :notificationEventName  AND  NOTIFICATION_COMPLETED  = 0")
+    List<NotificationModel> getNoCompletedNotificationList(String notificationEventName);
 
     @Query("UPDATE NOTIFICATIONS SET NOTIFICATION_COMPLETED  = :notificationCompleted WHERE NOTIFICATION_EVENT_NAME LIKE :notificationName " +
             " AND NOTIFICATION_DATE LIKE :notificationDate")
