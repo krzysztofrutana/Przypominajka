@@ -1,6 +1,5 @@
 package com.example.przypominajka.fragments.calendar;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -24,18 +23,15 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.przypominajka.activities.AddNewEventActivity;
-import com.example.przypominajka.activities.EventDetailsActivity;
 import com.example.przypominajka.adapters.EventListAdapter;
 import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.utils.MonthViewBuild;
@@ -43,14 +39,14 @@ import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.R;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.TranslateMonths;
-import com.example.przypominajka.viewModels.EventsViewModel;
+import com.example.przypominajka.databases.viewModels.EventsViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.example.przypominajka.R.drawable.text_view_border;
 import static com.example.przypominajka.R.drawable.text_view_border_clicked;
@@ -60,7 +56,9 @@ public class CalendarFragment extends Fragment {
 
     private Context context;
 
-    LocalDate currentDateInPreview;
+    public LocalDate currentDateInPreview;
+    public static LocalDate selectedDateInPreview;
+
     Typeface defaultTypeface;
     ColorStateList normalTextColor;
 
@@ -143,6 +141,8 @@ public class CalendarFragment extends Fragment {
         textBorder = ContextCompat.getDrawable(context, text_view_border);
         textBorderWhenClicked = ContextCompat.getDrawable(context, text_view_border_clicked);
 
+        selectedDateInPreview = LocalDate.now();
+
         return v;
     }
 
@@ -153,6 +153,14 @@ public class CalendarFragment extends Fragment {
         super.onAttach(context);
         context = cont;
 
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        setCurrentMonth(currentDateInPreview);
+        showEventList(currentDateInPreview, currentDateInPreview.toDateTimeAtStartOfDay().getMillis() <= LocalDate.now().toDateTimeAtStartOfDay().getMillis());
 
     }
 
@@ -181,7 +189,7 @@ public class CalendarFragment extends Fragment {
         RecyclerView.LayoutManager recycelLayoutManager = new
                 LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         eventList.setLayoutManager(recycelLayoutManager);
-        eventListAdapter = new EventListAdapter(context);
+        eventListAdapter = new EventListAdapter(context, true);
         eventList.setAdapter(eventListAdapter);
 
         // using LiveData observer to refresh calendar view and recycle view when add or delete event
@@ -189,7 +197,8 @@ public class CalendarFragment extends Fragment {
             @Override
             public void onChanged(List<EventModel> eventModels) {
                 setCurrentMonth(currentDateInPreview);
-                showEventList(currentDateInPreview);
+                showEventList(currentDateInPreview, currentDateInPreview.toDateTimeAtStartOfDay().getMillis() <= LocalDate.now().toDateTimeAtStartOfDay().getMillis());
+
             }
         });
     }
@@ -220,20 +229,21 @@ public class CalendarFragment extends Fragment {
                 linearLayout.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (tempMonthModel[finalX][finalI - 1].equals(LocalDate.now())) {
+                        selectedDateInPreview = tempMonthModel[finalX][finalI - 1];
+                        if (selectedDateInPreview.equals(LocalDate.now())) {
                             listViewLabel.setText("Lista zdarzeń na dziś:");
-                            showEventList(LocalDate.now());
+                            showEventList(LocalDate.now(), true);
                             linearLayout.setBackground(textBorder);
                         } else {
                             if (previousClickedLinearLayout != null) {
                                 previousClickedLinearLayout.setBackground(new ColorDrawable(Color.TRANSPARENT)); // reset previous cell to transparent border
                                 previousClickedLinearLayout = linearLayout;
                             }
-                            String temp = "Lista zdarzeń na " + tempMonthModel[finalX][finalI - 1].getDayOfMonth() +
-                                    "." + tempMonthModel[finalX][finalI - 1].getMonthOfYear() + "." + tempMonthModel[finalX][finalI - 1].getYear();
+                            String temp = "Lista zdarzeń na " + selectedDateInPreview.toString(DateTimeFormat.forPattern("dd.MM.YYYY"));
                             listViewLabel.setText(temp);
-                            showEventList(tempMonthModel[finalX][finalI - 1]);
+                            showEventList(selectedDateInPreview, selectedDateInPreview.toDateTimeAtStartOfDay().getMillis() <= LocalDate.now().toDateTimeAtStartOfDay().getMillis());
                             linearLayout.setBackground(textBorderWhenClicked); //set gray border in clicked cell of table
+
                             previousClickedLinearLayout = linearLayout;
 
                         }
@@ -338,7 +348,7 @@ public class CalendarFragment extends Fragment {
     }
 
     // set list view with events
-    public void showEventList(LocalDate localDate) {
+    public void showEventList(LocalDate localDate, boolean useCheckbox) {
         // get all event from database
         if (eventArray != null) {
             eventArray.clear();
@@ -350,10 +360,10 @@ public class CalendarFragment extends Fragment {
         }
         if (eventArray.size() > 0) {
             linearLayoutlinearLayoutIfTodayNothing.setVisibility(LinearLayout.GONE);
-            eventListAdapter.setList(eventArray);
+            eventListAdapter.setList(eventArray, useCheckbox);
         } else {
             linearLayoutlinearLayoutIfTodayNothing.setVisibility(LinearLayout.VISIBLE);
-            eventListAdapter.setList(eventArray);
+            eventListAdapter.setList(eventArray, useCheckbox);
         }
     }
 

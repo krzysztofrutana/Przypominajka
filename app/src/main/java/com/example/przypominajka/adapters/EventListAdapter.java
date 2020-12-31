@@ -7,13 +7,20 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.przypominajka.R;
 import com.example.przypominajka.activities.EventDetailsActivity;
+import com.example.przypominajka.databases.PrzypominajkaDatabase;
+import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.databases.entities.EventModel;
+import com.example.przypominajka.fragments.calendar.CalendarFragment;
+
+import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +30,11 @@ public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.View
 
     private final Context context;
     private List<EventModel> data = new ArrayList<>();
+    private boolean useCheckbox = false;
 
-    public EventListAdapter(Context context) {
+    public EventListAdapter(Context context, boolean useCheckbox) {
         this.context = context;
+        this.useCheckbox = useCheckbox;
     }
 
     @Override
@@ -36,7 +45,9 @@ public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+        holder.setIsRecyclable(false);
         holder.itemView.setTag(data.get(position));
+
 
         EventModel eventModel = data.get(position);
 
@@ -44,15 +55,36 @@ public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.View
                 GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[]{0xFFFFFFFF, data.get(position).getEventColor()});
 
-        holder.frameLayout.setBackground(gd);
+        holder.colorFrame.setBackground(gd);
 
         String tempEventName = eventModel.getEventName().replaceAll("_", " ");
 
         holder.eventName.setText(tempEventName);
+
+        if (useCheckbox) {
+            holder.isDone.setVisibility(View.VISIBLE);
+            if (CalendarFragment.selectedDateInPreview != null) {
+                if (PrzypominajkaDatabaseHelper.checkNotDoneEventForDay(eventModel.getEventName(), CalendarFragment.selectedDateInPreview)) {
+                    holder.isDone.setChecked(false);
+                } else {
+                    holder.isDone.setChecked(true);
+                }
+            }
+
+
+            holder.isDone.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    final boolean isChecked = holder.isDone.isChecked();
+                    PrzypominajkaDatabaseHelper.updateEventMadeColumn(eventModel.getEventName(), isChecked, CalendarFragment.selectedDateInPreview);
+                }
+            });
+        }
     }
 
-    public void setList(List<EventModel> eventModelList) {
+    public void setList(List<EventModel> eventModelList, boolean useCheckboxState) {
         this.data = eventModelList;
+        this.useCheckbox = useCheckboxState;
         notifyDataSetChanged();
     }
 
@@ -63,14 +95,19 @@ public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.View
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
+        public CheckBox isDone;
         public TextView eventName;
-        public TextView frameLayout;
+        public TextView colorFrame;
+
 
         public ViewHolder(View itemView) {
             super(itemView);
 
+            if (useCheckbox) {
+                isDone = itemView.findViewById(R.id.checkbox_list_item);
+            }
             eventName = itemView.findViewById(R.id.rowEventName);
-            frameLayout = itemView.findViewById(R.id.frameColor);
+            colorFrame = itemView.findViewById(R.id.frameColor);
 
             // implement onClicke method for current position of Recycle View
             itemView.setOnClickListener(view -> {

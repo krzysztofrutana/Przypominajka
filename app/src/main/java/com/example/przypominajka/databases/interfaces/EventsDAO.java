@@ -5,6 +5,7 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.example.przypominajka.databases.entities.EventModel;
 
@@ -21,6 +22,9 @@ public interface EventsDAO {
 
     @Delete
     int delete(EventModel event);
+
+    @Update
+    int update(EventModel event);
 
     @Query("SELECT * FROM EVENTS WHERE EVENT_NAME LIKE :eventName")
     EventModel findByEventName(String eventName);

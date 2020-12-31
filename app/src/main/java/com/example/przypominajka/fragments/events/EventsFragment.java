@@ -7,7 +7,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,11 +19,8 @@ import com.example.przypominajka.activities.AddNewEventActivity;
 
 import com.example.przypominajka.R;
 import com.example.przypominajka.adapters.EventListAdapter;
-import com.example.przypominajka.databases.entities.EventModel;
-import com.example.przypominajka.viewModels.EventsViewModel;
+import com.example.przypominajka.databases.viewModels.EventsViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import java.util.List;
 
 
 public class EventsFragment extends Fragment {
@@ -73,7 +69,7 @@ public class EventsFragment extends Fragment {
         RecyclerView.LayoutManager recycelLayoutManager = new
                 LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerViewListOfEvents.setLayoutManager(recycelLayoutManager);
-        adapter = new EventListAdapter(context);
+        adapter = new EventListAdapter(context, false);
         recyclerViewListOfEvents.setAdapter(adapter);
         showAllEventList();
     }
@@ -89,7 +85,7 @@ public class EventsFragment extends Fragment {
     public void showAllEventList() {
 
         taskListViewModel.getAllEvents()
-                .observe(getViewLifecycleOwner(), eventModels -> adapter.setList(eventModels));
+                .observe(getViewLifecycleOwner(), eventModels -> adapter.setList(eventModels, false));
 
     }
 }

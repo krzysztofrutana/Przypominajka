@@ -88,4 +88,14 @@ public class EventsRepository {
         }
         return eventId;
     }
+
+    public int updateEvent(final EventModel event) {
+        int results = -1;
+        try {
+            results = PrzypominajkaDatabase.databaseWriteExecutor.submit(() -> eventsDAO.update(event)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
 }

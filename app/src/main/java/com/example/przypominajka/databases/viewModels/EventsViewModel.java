@@ -1,20 +1,16 @@
-package com.example.przypominajka.viewModels;
+package com.example.przypominajka.databases.viewModels;
 
 import android.app.Application;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.databases.repositories.EventsRepository;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 // ViewModel Layer for event model and event repository
 public class EventsViewModel extends AndroidViewModel {
@@ -58,6 +54,10 @@ public class EventsViewModel extends AndroidViewModel {
 
     public int getEventID(String eventName) {
         return eventsRepository.getEventID(eventName);
+    }
+
+    public int updateEvent(EventModel event) {
+        return eventsRepository.updateEvent(event);
     }
 
 }
