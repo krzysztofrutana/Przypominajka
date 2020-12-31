@@ -33,7 +33,7 @@ import com.example.przypominajka.utils.Permissions;
 import com.example.przypominajka.utils.databaseBackupAndRestore.BackupDatabase.LocalBackupDatabase;
 import com.example.przypominajka.utils.databaseBackupAndRestore.BackupDatabase.RemoteBackupDatabase;
 import com.example.przypominajka.utils.databaseBackupAndRestore.RestoreBackup.RestoreDatabase;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.Scopes;

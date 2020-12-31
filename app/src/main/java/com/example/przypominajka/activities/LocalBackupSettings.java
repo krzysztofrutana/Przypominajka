@@ -19,7 +19,7 @@ import android.widget.TextView;
 import com.example.przypominajka.R;
 import com.example.przypominajka.utils.FileUtil;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;

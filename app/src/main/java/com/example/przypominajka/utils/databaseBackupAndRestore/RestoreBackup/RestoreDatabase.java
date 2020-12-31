@@ -7,8 +7,7 @@ import android.util.Log;
 import com.example.przypominajka.databases.PrzypominajkaDatabase;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.Permissions;
-import com.example.przypominajka.viewModels.EventsViewModel;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.EventsViewModel;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -19,7 +19,7 @@ import android.widget.TextView;
 import com.example.przypominajka.R;
 
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;

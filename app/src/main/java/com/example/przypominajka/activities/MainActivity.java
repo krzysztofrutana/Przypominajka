@@ -24,7 +24,7 @@ import com.example.przypominajka.fragments.events.EventsFragment;
 import com.example.przypominajka.fragments.settings.SettingFragment;
 import com.example.przypominajka.services.SetAlarmService;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 import com.google.android.material.navigation.NavigationView;
 
 

@@ -8,7 +8,7 @@ import android.widget.Toast;
 import com.example.przypominajka.databases.PrzypominajkaDatabase;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.Permissions;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 
 import java.io.File;
 import java.io.FileInputStream;

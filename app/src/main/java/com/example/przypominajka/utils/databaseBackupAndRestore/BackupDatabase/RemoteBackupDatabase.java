@@ -7,7 +7,7 @@ import com.example.przypominajka.databases.PrzypominajkaDatabase;
 import com.example.przypominajka.utils.DriveServiceHelper;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.utils.Permissions;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 import com.google.android.gms.tasks.Task;
 import com.google.api.client.http.FileContent;
 import com.google.api.services.drive.model.File;

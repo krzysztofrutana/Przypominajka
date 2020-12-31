@@ -1,4 +1,4 @@
-package com.example.przypominajka.viewModels;
+package com.example.przypominajka.databases.viewModels;
 
 import android.app.Application;
 
@@ -8,9 +8,6 @@ import androidx.lifecycle.LiveData;
 
 import com.example.przypominajka.databases.entities.SettingsModel;
 import com.example.przypominajka.databases.repositories.SettingsRepository;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 
 // ViewModel Layer for event model and event repository
 public class SettingsViewModel extends AndroidViewModel {

@@ -107,7 +107,7 @@
     //Event details activity
     <string name="EVA_absence">Brak</string>
     <string name="EVA_always_remind_what">Przypominaj zawsze co</string>
-    <string name="EVA_remind_what">Przypominaj zawsze co</string>
+    <string name="EVA_remind_what">Przypominaj co</string>
     <string name="EVA_one_time">Jednorazowo</string>
 
     //Local backup settings

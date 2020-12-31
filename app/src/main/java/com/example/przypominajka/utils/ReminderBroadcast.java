@@ -14,8 +14,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.example.przypominajka.R;
 import com.example.przypominajka.activities.MainActivity;
-import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
-import com.example.przypominajka.viewModels.NotificationViewModel;
+import com.example.przypominajka.databases.viewModels.NotificationViewModel;
 
 import org.joda.time.LocalDate;
 
