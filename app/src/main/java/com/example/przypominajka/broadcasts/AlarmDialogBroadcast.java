@@ -20,7 +20,6 @@ import com.example.przypominajka.utils.CheckNotDoneEvent;
 
 import org.joda.time.LocalDate;
 
-//TODO its don't work correctly, to fix.
 
 public class AlarmDialogBroadcast extends BroadcastReceiver {
 
