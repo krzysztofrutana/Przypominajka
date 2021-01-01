@@ -1,4 +1,4 @@
-package com.example.przypominajka.utils;
+package com.example.przypominajka.broadcasts;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat;
 import com.example.przypominajka.R;
 import com.example.przypominajka.activities.MainActivity;
 import com.example.przypominajka.databases.viewModels.NotificationViewModel;
+import com.example.przypominajka.utils.MyPrzypominajkaApp;
 
 import org.joda.time.LocalDate;
 

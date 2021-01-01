@@ -39,12 +39,10 @@ import android.widget.Toast;
 import com.example.przypominajka.R;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.databases.entities.EventModel;
-import com.example.przypominajka.databases.entities.IntentModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
-import com.example.przypominajka.utils.ReminderBroadcast;
+import com.example.przypominajka.broadcasts.ReminderBroadcast;
 import com.example.przypominajka.databases.viewModels.EventsViewModel;
-import com.example.przypominajka.databases.viewModels.IntentsViewModel;
 import com.example.przypominajka.databases.viewModels.NotificationViewModel;
 import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 
@@ -124,7 +122,6 @@ public class AddNewEventActivity extends AppCompatActivity {
     private final SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
     private final EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
     private final NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
-    private final IntentsViewModel intentsViewModel = new IntentsViewModel(MyPrzypominajkaApp.get());
 
     private boolean canBeSave;
 
@@ -744,16 +741,6 @@ public class AddNewEventActivity extends AppCompatActivity {
                             notifyAndPendingIntentID,
                             notificationIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-
-                    IntentModel intentModel = new IntentModel("PendingIntent", eventNameField.getText().toString(), notifyAndPendingIntentID, true,
-                            tempEventTime.getMillis());
-                    long resultInsertIntent = intentsViewModel.insertIntent(intentModel);
-                    if (resultInsertIntent != -1) {
-                        Log.d(TAG, "saveEvent: Dodano intencje dla " + eventNameField.getText().toString() + ", ID: " + notifyAndPendingIntentID
-                                + ", Data: " + tempEventTime.toLocalDate().toString());
-                    } else {
-                        Log.d(TAG, "saveEvent: Nie udało się dodać informacji o intencji");
-                    }
                 } else {
                     Log.d("AddNewEvent", "Problem z pobraniem ID wydarzenia z bazy");
                     return;

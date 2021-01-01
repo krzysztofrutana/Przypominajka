@@ -32,7 +32,7 @@ import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.databases.repositories.SettingsRepository;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
-import com.example.przypominajka.utils.ReminderBroadcast;
+import com.example.przypominajka.broadcasts.ReminderBroadcast;
 import com.example.przypominajka.databases.viewModels.EventsViewModel;
 import com.example.przypominajka.databases.viewModels.NotificationViewModel;
 

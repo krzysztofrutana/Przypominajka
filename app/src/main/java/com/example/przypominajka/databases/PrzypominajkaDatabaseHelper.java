@@ -323,6 +323,7 @@ public class PrzypominajkaDatabaseHelper {
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
                 findedDays.add(new LocalDate(cursor.getLong(cursor.getColumnIndex("DAY"))));
+                cursor.moveToNext();
             }
             cursor.close();
             return findedDays;

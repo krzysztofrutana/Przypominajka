@@ -5,20 +5,16 @@ import android.app.PendingIntent;
 import android.app.job.JobParameters;
 import android.content.Intent;
 import android.util.Log;
-import android.widget.Toast;;
+;
 
-import androidx.lifecycle.LiveData;
-
-import com.example.przypominajka.activities.AddNewEventActivity;
-import com.example.przypominajka.databases.PrzypominajkaDatabase;
 import com.example.przypominajka.databases.PrzypominajkaDatabaseHelper;
 import com.example.przypominajka.databases.entities.EventModel;
 import com.example.przypominajka.databases.entities.NotificationModel;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
-import com.example.przypominajka.utils.ReminderBroadcast;
-import com.example.przypominajka.viewModels.EventsViewModel;
-import com.example.przypominajka.viewModels.NotificationViewModel;
-import com.example.przypominajka.viewModels.SettingsViewModel;
+import com.example.przypominajka.broadcasts.ReminderBroadcast;
+import com.example.przypominajka.databases.viewModels.EventsViewModel;
+import com.example.przypominajka.databases.viewModels.NotificationViewModel;
+import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -39,6 +35,8 @@ public class SetAlarmService extends android.app.job.JobService {
     private EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
     private NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
     private SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+
+    private static final String TAG = "SetAlarmService";
 
     @Override
     public boolean onStartJob(JobParameters params) {
@@ -67,14 +65,14 @@ public class SetAlarmService extends android.app.job.JobService {
         List<EventModel> allEvent;
         List<EventModel> forNextDayDefaultTime;
         try {
-            Log.d("OnStartJob", "Rozpoczęte");
+            Log.d(TAG, "setNotify: Rozpoczęte");
             nextDayDate = LocalDate.now();
             nextDayDate = nextDayDate.plusDays(1);
 
             allEvent = PrzypominajkaDatabaseHelper.getEventForCurrentDay(nextDayDate);
             forNextDayDefaultTime = new ArrayList<>();
         } catch (Exception e) {
-            Log.d("setNotify", "Problem z pobraniem wydarzen " + e.getMessage());
+            Log.d(TAG, "setNotify: Problem z pobraniem wydarzen " + e.getMessage());
             return;
         }
         try {
@@ -91,7 +89,6 @@ public class SetAlarmService extends android.app.job.JobService {
                                 // set alarm for event which dont have default time for alarm
                                 if (!tempEvent.getItsOneTimeEvent()) {
                                     boolean isCreated = PrzypominajkaDatabaseHelper.checkIfNotificationIsCreated(tempEvent.getEventName(), nextDayDate);
-                                    Log.d("OnStartJob boolean", String.valueOf(isCreated));
                                     if (!isCreated) {
                                         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
@@ -111,8 +108,8 @@ public class SetAlarmService extends android.app.job.JobService {
                                                 notificationIntent,
                                                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-                                        Log.d("setAlarmService", "ID " + notifyPendingIntentID);
                                         LocalTime eventTime = tempEvent.getEventTime();
+
 
 
                                         DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
@@ -123,15 +120,15 @@ public class SetAlarmService extends android.app.job.JobService {
 
                                         PrzypominajkaDatabaseHelper.updateNotificationCreatedColumn(tempEvent.getEventName(), true, nextDayDate);
 
-                                        Log.d("OnStartJob", "Stworzono powiadomienie dla " + tempEvent.getEventName() + " o godzinie " + tempEventTime.toString());
+                                        Log.d(TAG, "setNotify: Stworzono powiadomienie dla " + tempEvent.getEventName() + " o godzinie " + tempEventTime.toString());
                                         NotificationModel newNotification = new NotificationModel(tempEvent.getEventName(), notifyPendingIntentID,
                                                 new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()), tempEventTime.toLocalDate(), false);
                                         long result = notificationViewModel.insertNotification(newNotification);
                                         if (result != -1) {
-                                            Log.d("OnStartJob", "Dodano powiadomienie dla " + tempEvent.getEventName() + " " + tempEventTime.toLocalDate().toString()
+                                            Log.d(TAG, "setNotify: Dodano powiadomienie dla " + tempEvent.getEventName() + " " + tempEventTime.toLocalDate().toString()
                                                     + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
                                         } else {
-                                            Log.d("OnStartJob", "Nie udało się dodać informacji o powiadomieniu");
+                                            Log.d(TAG, "setNotify: Nie udało się dodać informacji o powiadomieniu");
                                         }
                                     }
                                 }
@@ -139,13 +136,13 @@ public class SetAlarmService extends android.app.job.JobService {
 
                         }
                     } catch (Exception e) {
-                        Log.d("OnStartJob", "Problem z stworzeniem powiadomienia dla wydarzen z czasem innym niż domyślny " + e.getMessage());
+                        Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla wydarzen z czasem innym niż domyślny " + e.getMessage());
                         return;
                     }
                 }
             }
         } catch (Exception e) {
-            Log.d("OnStartJob", "Problem z stworzeniem powiadomienia " + e.getMessage());
+            Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia " + e.getMessage());
         }
 
 
@@ -189,10 +186,8 @@ public class SetAlarmService extends android.app.job.JobService {
                             -nextDayDate.getDayOfYear(),
                             notificationIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-                    Log.d("OnStartJob", String.valueOf(nextDayDate.getDayOfYear()));
 
                     LocalTime eventTime = new LocalTime(settingsViewModel.getDefaultTime(), DateTimeZone.forID("UCT"));
-                    Log.d("setAlarmService", eventTime.toString());
 
                     DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
                             nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour())
@@ -201,15 +196,15 @@ public class SetAlarmService extends android.app.job.JobService {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
                     long result = notificationViewModel.insertNotification(tempNotification);
                     if (result != -1) {
-                        Log.d("OnStartJob", "Dodano powiadomienie dla " + eventsWithDefaultTime + " " + tempEventTime.toLocalDate().toString()
+                        Log.d(TAG, "setNotify: Dodano powiadomienie dla " + eventsWithDefaultTime + " " + tempEventTime.toLocalDate().toString()
                                 + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
                     } else {
-                        Log.d("OnStartJob", "Stworzono powiadomienie dla " + eventsWithDefaultTime + " o godzinie " + tempEventTime.toString());
+                        Log.d(TAG, "setNotify: Stworzono powiadomienie dla " + eventsWithDefaultTime + " o godzinie " + tempEventTime.toString());
                     }
                 }
             }
         } catch (Exception e) {
-            Log.d("OnStartJob", "Problem z stworzeniem powiadomienia dla wydarzen domyślnych " + e.getMessage());
+            Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla wydarzen domyślnych " + e.getMessage());
         }
     }
 }
