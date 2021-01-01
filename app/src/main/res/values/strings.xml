@@ -120,4 +120,8 @@
     <string name="RBS_log_out">Wyloguj</string>
     <string name="make_backup_section">Stwórz kopię zapasową</string>
 
+    //Alert dialog text
+    <string name="ADmessage">Znalezione niezrealizowane wydarzenia:</string>
+    <string name="ADtitle">Niezrealizowane wydarzenia</string>
+
 </resources>

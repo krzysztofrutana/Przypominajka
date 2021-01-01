@@ -49,7 +49,13 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".utils.ReminderBroadcast">
+        <receiver android:name=".broadcasts.ReminderBroadcast">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".broadcasts.AlarmDialogBroadcast">
             <intent-filter>
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.TIME_SET" />

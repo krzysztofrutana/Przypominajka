@@ -23,6 +23,7 @@ import com.example.przypominajka.fragments.calendar.CalendarFragment;
 import com.example.przypominajka.fragments.events.EventsFragment;
 import com.example.przypominajka.fragments.settings.SettingFragment;
 import com.example.przypominajka.services.SetAlarmService;
+import com.example.przypominajka.utils.CheckNotDoneEvent;
 import com.example.przypominajka.utils.MyPrzypominajkaApp;
 import com.example.przypominajka.databases.viewModels.SettingsViewModel;
 import com.google.android.material.navigation.NavigationView;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
 
     NavigationView navigationView;
+    CheckNotDoneEvent checkNotDoneEvent = new CheckNotDoneEvent();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             jobScheduler.schedule(jobInfo);
 
         }
+
+        checkNotDoneEvent.checkAllNotDoneEventInPast(this);
+
     }
 
     // Necessary to close menu if is open when back button is pressed
