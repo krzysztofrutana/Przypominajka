@@ -132,6 +132,19 @@ The window on the left allows you to view all saved events. After clicking on th
   </a>
   
   The settings allow you to change the default notification time and the time interval for checking events and creating new notifications. This tab allows you to create a local backup on your phone or Google Drive and restore it.
+  <br />
+<br />
+<br />
+<br /><br />
+  <p align="center">
+  <a href="https://github.com/krzysztofrutana/OCR-Desktop">
+    <img src="https://i.ibb.co/tK8JRpf/Screenshot-1609519085.png" width="400">
+    <img src="https://i.ibb.co/4Zm5sx1/Screenshot-1609518980.png" width="400">
+  </a>
+  <br />
+  
+  After starting, the application looks for unfinished days for all events. When some days are not mark as finished, application shows alert dialog with information about all finded days for all events with three options: to mark all days as finished, ignore information or remind me later.
+  
 
 <!--Built With -->
 ### Built With
@@ -143,8 +156,7 @@ The window on the left allows you to view all saved events. After clicking on th
 
 <!--Plan for the future -->
 ## Plan for the future
-* For now only testing. In future maybe confirmation of doing something in current day, if not move event on other date.
-* Add move event options.
+* For now only testing and refactor code, add comments etc.
 
 <!-- GETTING STARTED -->
 ## Getting Started
