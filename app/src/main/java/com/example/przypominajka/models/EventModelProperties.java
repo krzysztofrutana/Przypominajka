@@ -3,6 +3,7 @@ package com.example.przypominajka.models;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
+// class to save information about necessary information to create new eventModel object
 public class EventModelProperties {
 
     private boolean itsMonthInterval;

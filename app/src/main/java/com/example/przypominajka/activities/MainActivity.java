@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     NavigationView navigationView;
     CheckNotDoneEvent checkNotDoneEvent = new CheckNotDoneEvent();
 
+    private static final String TAG = "MainActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,9 +66,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (checkIntervalTime == 0) {
             long result = settingsViewModel.insertSettings(new SettingsModel(28800000, 900000, "", ""));
             if (result != -1) {
-                Log.d("MainActivity onCreate", "Dodawanie domyślnych ustawień udane");
+                Log.d(TAG, "OnCreate: Dodawanie domyślnych ustawień udane");
             } else {
-                Log.d("MainActivity onCreate", "Dodawanie domyślnych ustawień nieudane");
+                Log.d(TAG, "OnCreate: Dodawanie domyślnych ustawień nieudane");
             }
         } else {
 
@@ -79,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         }
 
+        // after start application (but not for example resume, that could be annoying) always will check nod done event
         checkNotDoneEvent.checkAllNotDoneEventInPast(this);
 
     }

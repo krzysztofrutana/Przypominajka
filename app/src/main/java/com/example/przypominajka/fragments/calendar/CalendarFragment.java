@@ -64,7 +64,6 @@ public class CalendarFragment extends Fragment {
 
     ArrayList<EventModel> eventArray = new ArrayList<>();
     ArrayList<Integer> eventColorForCurrentDateArray = new ArrayList<>();
-    EventListAdapter adapter;
 
     RecyclerView eventList;
 
@@ -86,6 +85,8 @@ public class CalendarFragment extends Fragment {
     private final EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
 
     LinearLayout previousClickedLinearLayout;
+
+    private static final String TAG = "CalendarFragment";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -116,7 +117,7 @@ public class CalendarFragment extends Fragment {
                     Button buttonYear = viewThis.findViewById(R.id.btnYear);
                     buttonYear.setText(String.valueOf(previousMonth.getYear()));
                 } catch (Exception exept) {
-                    Log.e("buttonLeft_Click", exept.getMessage());
+                    Log.e(TAG, "Button Left Arrow Click:" + exept.getMessage());
                 }
             }
         });
@@ -133,7 +134,7 @@ public class CalendarFragment extends Fragment {
                     Button buttonYear = viewThis.findViewById(R.id.btnYear);
                     buttonYear.setText(String.valueOf(nextMonth.getYear()));
                 } catch (Exception exept) {
-                    Log.e("buttonRight_Click", exept.getMessage());
+                    Log.e(TAG, "Button Right Arrow Click:" + exept.getMessage());
                 }
             }
         });
@@ -274,11 +275,11 @@ public class CalendarFragment extends Fragment {
                         List<EventModel> events = eventsViewModel.getAllEventsList();
                         if (events == null) {
                             Toast.makeText(context, "Wystąpił problem z pobraniem wydarzeń z  bazy danych", Toast.LENGTH_LONG).show();
-                            Log.w("SQLite setCurrentMonth", "Wystąpił problem z pobraniem wydarzeń z  bazy danych");
+                            Log.w(TAG, "setCurrentMonth: Wystąpił problem z pobraniem wydarzeń z  bazy danych");
                             return;
                         } else if (events.size() == 0) {
                             eventColorForCurrentDateArray.clear();
-                            Log.d("SQLite setCurrentMonth", "Brak wydarzeń do pokazania");
+                            Log.d(TAG, "setCurrentMonth: Brak wydarzeń do pokazania");
                             continue;
                         } else {
                             eventColorForCurrentDateArray.clear();
@@ -355,7 +356,7 @@ public class CalendarFragment extends Fragment {
         }
         eventArray = PrzypominajkaDatabaseHelper.getEventForCurrentDay(localDate);
         if (eventArray == null) {
-            Log.w("SQLite showEventList", "Wystąpił problem z pobraniem wydarzeń z baza danych");
+            Log.w(TAG, "showEventList: Wystąpił problem z pobraniem wydarzeń z baza danych");
             return;
         }
         if (eventArray.size() > 0) {

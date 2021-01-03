@@ -25,6 +25,7 @@ public class ReminderBroadcast extends BroadcastReceiver {
     final String channelName = "PrzypominajkaChannel";
     int notifyID = 0;
     private NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
+    private static final String TAG = "RemindBroadcast";
 
 
     @Override
@@ -32,17 +33,20 @@ public class ReminderBroadcast extends BroadcastReceiver {
 
         String text = intent.getStringExtra("NOTIFY_TEXT");
         notifyID = intent.getIntExtra("ID", 100);
-        Log.d("onReceive", "text : " + text + " notifyID: " + notifyID);
+        Log.d(TAG, "OnRecive: text : " + text + " notifyID: " + notifyID);
 
+        // if text is null not notify this notification
         if (text == null) {
             return;
         }
 
+        // create pending intent which start MainActivity after click on notification
         Intent intentMainActivity = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context,
                 (notifyID - (2 * notifyID)) - 1000, intentMainActivity,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
+        // one or more event must have other title
         String title;
         if (intent.getIntExtra("MANY", 1) == 1) {
             title = "Zbliżające się wydarzenie";
@@ -57,11 +61,12 @@ public class ReminderBroadcast extends BroadcastReceiver {
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
+        // update information about notification in table, this is protection against notify this same notification two times
         int result = notificationViewModel.updateNotificationCompleted(text, LocalDate.now().toDateTimeAtStartOfDay().getMillis(), true);
         if (result > 0) {
-            Log.d("RemindBroadcast", "Informacja w wydarzeniu " + text + " zaktualizowana");
+            Log.d(TAG, "OnRecive: Informacja w wydarzeniu " + text + " zaktualizowana");
         } else {
-            Log.d("RemindBroadcast", "Nie udało się zaktualizować kolumny o notyfikacji w wydarzeniu " + text);
+            Log.d(TAG, "OnRecive: Nie udało się zaktualizować kolumny o notyfikacji w wydarzeniu " + text);
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

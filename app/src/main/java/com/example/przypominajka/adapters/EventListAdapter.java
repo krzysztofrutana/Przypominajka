@@ -64,11 +64,8 @@ public class EventListAdapter extends RecyclerView.Adapter<EventListAdapter.View
         if (useCheckbox) {
             holder.isDone.setVisibility(View.VISIBLE);
             if (CalendarFragment.selectedDateInPreview != null) {
-                if (PrzypominajkaDatabaseHelper.checkNotDoneEventForDay(eventModel.getEventName(), CalendarFragment.selectedDateInPreview)) {
-                    holder.isDone.setChecked(false);
-                } else {
-                    holder.isDone.setChecked(true);
-                }
+                // check if event day is done, if yes set checked.
+                holder.isDone.setChecked(!PrzypominajkaDatabaseHelper.checkNotDoneEventForDay(eventModel.getEventName(), CalendarFragment.selectedDateInPreview));
             }
 
 

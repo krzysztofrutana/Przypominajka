@@ -38,6 +38,11 @@ public class CheckNotDoneEvent {
     private final String alertDialogTitle = MyPrzypominajkaApp.get().getString(R.string.ADtitle);
     private final String alertDialogMessage = MyPrzypominajkaApp.get().getString(R.string.ADmessage);
 
+    /**
+     * Check all events, build alert dialog text
+     *
+     * @param context - context necessary to show alert dialog
+     */
     public void checkAllNotDoneEventInPast(Context context) {
         List<EventModel> allEvents = eventsRepository.getAllEventsList();
         List<NotDoneEventModel> eventsWithNotDoneDays = new ArrayList<>();
@@ -64,6 +69,12 @@ public class CheckNotDoneEvent {
         }
     }
 
+    /**
+     * Get NotDoneEventModel with all not done days and text to this event
+     *
+     * @param event - eventModel to check
+     * @return NotDoneEventModel object with all not done days, text for alert dialog. Null if all days are done.
+     */
     private NotDoneEventModel checkOneNotDoneEventInPasts(EventModel event) {
         List<LocalDate> listOfNotDoneDay = new ArrayList<>();
         try {
@@ -82,6 +93,12 @@ public class CheckNotDoneEvent {
         }
     }
 
+    /**
+     * Method to show dialog if find only one event with not done days
+     *
+     * @param context           - to show alert dialog
+     * @param notDoneEventModel - object with all not done days list and text to show
+     */
     private void showAlertDialogIfOnlyOneEvent(Context context, NotDoneEventModel notDoneEventModel) {
         StringBuilder textForDays = new StringBuilder();
         for (String tempString : notDoneEventModel.getTextForDays()) {
@@ -128,6 +145,13 @@ public class CheckNotDoneEvent {
         dialog.show();
     }
 
+    /**
+     * Show alert dialog for more than one event, problematic is positive button click method.
+     *
+     * @param context                - to show alert dialog
+     * @param textOfDaysForAllEvents - text to show in alert dialog
+     * @param listOfNotDoneEvents    - list of notDoneEventModel with all nod done days for all finded events
+     */
     private void showAlertDialogForMoreEvents(Context context, String textOfDaysForAllEvents, List<NotDoneEventModel> listOfNotDoneEvents) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(alertDialogTitle);

@@ -80,6 +80,8 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private LocalDate newDateForMoveEvent;
 
+    private static final String TAG = "EventDetailsActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -212,6 +214,7 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        // update event in events table if was changed
         if (isEdited)
             eventsViewModel.updateEvent(event);
         super.onDestroy();
@@ -223,24 +226,35 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.delete_event) {
             // deleting event
             try {
+                // use % symbol with LIKE in SQL query to find all row with event name in text
                 String nameToSearch = "%" + eventName + "%";
                 List<NotificationModel> notificationList = notificationViewModel.getNoCompletedNotificationList(nameToSearch);
+
                 int result = eventsViewModel.deleteEvent(eventsViewModel.findByEventName(eventName));
+
                 if (result > 0) {
                     PrzypominajkaDatabaseHelper.deleteEvent(eventName);
                     assert notificationList != null;
                     for (NotificationModel notification : notificationList) {
+                        // notification.getNotificationID() < 0 means its notification with default time, this notification may have more than one event in text
                         if (notification.getNotificationID() < 0) {
-                            int indexOfEventName = notification.getNotificationName().indexOf(eventName);
+                            int indexOfEventName = notification.getNotificationName().indexOf(eventName); // find index of event name text in notification text
+                            // if > 0 so not at the beginning of the text
                             if (indexOfEventName > 0) {
-                                String textToRemove = ", " + eventName;
+                                String textToRemove = ", " + eventName; // if not at the beginning so must have ', ' before.
                                 notification.notificationEventName = notification.notificationEventName.replace(textToRemove, "");
-                                notificationViewModel.updateNotification(notification);
+                                notificationViewModel.updateNotification(notification); // update notification with changed notification text
                             } else {
+                                // if length of notification is greater than event name, so have more than one event in text
                                 if (notification.getNotificationName().length() > eventName.length()) {
-                                    String textToRemove = eventName + ", ";
+                                    String textToRemove = eventName + ", "; // if it at the beginning of text or in the middle must have ', ' after name
                                     notification.notificationEventName = notification.notificationEventName.replace(textToRemove, "");
                                     notificationViewModel.updateNotification(notification);
+                                    // if event name is on the end of notification text
+                                } else if (notification.getNotificationName().endsWith(eventName)) {
+                                    notification.notificationEventName = notification.notificationEventName.replace(eventName, "");
+                                    notificationViewModel.updateNotification(notification);
+                                    // if notification text its event name
                                 } else if (notification.getNotificationName().length() == eventName.length()) {
 
                                     Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
@@ -262,6 +276,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                                 }
                             }
                         } else {
+                            // if notification id > 0, so it is event with custom time, notification for this event is created individually for each event
                             int resultDelete = notificationViewModel.delete(notification);
                             if (resultDelete > 0) {
                                 Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
@@ -287,12 +302,12 @@ public class EventDetailsActivity extends AppCompatActivity {
                     return true;
                 } else {
                     Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
-                    Log.w("Delete_event", "Problem przy usuwanie zdarzenia");
+                    Log.w(TAG, "Delete Event: Problem przy usuwaniu zdarzenia");
                     return false;
                 }
             } catch (Exception e) {
                 Toast.makeText(this, "Problem przy usuwanie zdarzenia", Toast.LENGTH_LONG).show();
-                Log.w("Delete_event", "Problem przy usuwanie zdarzenia " + e.getMessage());
+                Log.w(TAG, "Delete Event: Problem przy usuwanie zdarzenia " + e.getMessage());
                 return false;
             }
             // back button on toolbar action

@@ -14,7 +14,12 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 
+/**
+ * Class to get absolute path from UriTree
+ * Link: https://github.com/nzbget/android/blob/master/app/src/main/java/net/nzbget/nzbget/FileUtil.java
+ */
 public final class FileUtil {
+
     static String TAG = "TAG";
     private static final String PRIMARY_VOLUME_NAME = "primary";
 

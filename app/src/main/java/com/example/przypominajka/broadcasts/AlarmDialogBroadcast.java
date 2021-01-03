@@ -36,6 +36,7 @@ public class AlarmDialogBroadcast extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         int notifyID = intent.getIntExtra("ID", 11000);
 
+        // create pending intent which start MainActivity after click on notification
         Log.d(TAG, "onRecive: uruchomiono notifikacje");
         Intent intentMainActivity = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context,

@@ -6,6 +6,7 @@ import org.joda.time.LocalDate;
 
 import java.util.List;
 
+// class to save information about days of one not done event
 public class NotDoneEventModel {
 
     private List<LocalDate> listOdNotDoneDays;

@@ -32,9 +32,8 @@ public class SetAlarmService extends android.app.job.JobService {
     JobParameters mParams;
     LocalDate nextDayDate;
 
-    private EventsViewModel eventsViewModel = new EventsViewModel(MyPrzypominajkaApp.get());
-    private NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
-    private SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
+    private final NotificationViewModel notificationViewModel = new NotificationViewModel(MyPrzypominajkaApp.get());
+    private final SettingsViewModel settingsViewModel = new SettingsViewModel(MyPrzypominajkaApp.get());
 
     private static final String TAG = "SetAlarmService";
 
@@ -76,75 +75,48 @@ public class SetAlarmService extends android.app.job.JobService {
             return;
         }
         try {
-            if (allEvent != null) {
-                if (allEvent.size() > 0) {
-                    try {
-                        for (EventModel tempEvent : allEvent) {
-                            // check if its not one time event
-                            if (tempEvent.getEventTimeDefault()) {
-                                if (!tempEvent.getItsOneTimeEvent()) {
-                                    forNextDayDefaultTime.add(tempEvent);
-                                }
-                            } else if (!tempEvent.getEventTimeDefault()) {
-                                // set alarm for event which dont have default time for alarm
-                                if (!tempEvent.getItsOneTimeEvent()) {
-                                    boolean isCreated = PrzypominajkaDatabaseHelper.checkIfNotificationIsCreated(tempEvent.getEventName(), nextDayDate);
-                                    if (!isCreated) {
-                                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (allEvent != null && allEvent.size() > 0) {
+                try {
+                    for (EventModel tempEvent : allEvent) {
+                        // check if its not one time event
+                        if (tempEvent.getEventTimeDefault()) {
+                            if (!tempEvent.getItsOneTimeEvent()) {
+                                forNextDayDefaultTime.add(tempEvent);
+                            }
+                        } else if (!tempEvent.getEventTimeDefault()) {
+                            // set alarm for event which dont have default time for alarm
+                            if (!tempEvent.getItsOneTimeEvent()) {
+                                boolean isCreated = PrzypominajkaDatabaseHelper.checkIfNotificationIsCreated(tempEvent.getEventName(), nextDayDate);
+                                if (!isCreated) {
 
-                                        int year = nextDayDate.getYear();
-                                        String yearShortString = Integer.toString(year).substring(2);
-                                        int yearShort = Integer.parseInt(yearShortString);
+                                    int year = nextDayDate.getYear();
+                                    String yearShortString = Integer.toString(year).substring(2);
+                                    int yearShort = Integer.parseInt(yearShortString);
 
-                                        int notifyPendingIntentID = Integer.parseInt(String.valueOf(tempEvent.getId()) +
-                                                String.valueOf(nextDayDate.getDayOfYear()) + String.valueOf(yearShort));
+                                    int notifyPendingIntentID = Integer.parseInt(String.valueOf(tempEvent.getId()) +
+                                            String.valueOf(nextDayDate.getDayOfYear()) + String.valueOf(yearShort));
 
-                                        Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
-                                        notificationIntent.putExtra("NOTIFY_TEXT", tempEvent.getEventName());
-                                        notificationIntent.putExtra("ID", notifyPendingIntentID);
+                                    boolean notificationCreated = createNotification(tempEvent.getEventName(),
+                                            notifyPendingIntentID,
+                                            tempEvent.getEventTime(),
+                                            1,
+                                            false);
 
-                                        PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                                                notifyPendingIntentID,
-                                                notificationIntent,
-                                                PendingIntent.FLAG_UPDATE_CURRENT);
-
-                                        LocalTime eventTime = tempEvent.getEventTime();
-
-
-
-                                        DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
-                                                nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour())
-                                                .withZoneRetainFields(DateTimeZone.forID(TimeZone.getDefault().getID()));
-
-                                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
-
-                                        PrzypominajkaDatabaseHelper.updateNotificationCreatedColumn(tempEvent.getEventName(), true, nextDayDate);
-
-                                        Log.d(TAG, "setNotify: Stworzono powiadomienie dla " + tempEvent.getEventName() + " o godzinie " + tempEventTime.toString());
-                                        NotificationModel newNotification = new NotificationModel(tempEvent.getEventName(), notifyPendingIntentID,
-                                                new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()), tempEventTime.toLocalDate(), false);
-                                        long result = notificationViewModel.insertNotification(newNotification);
-                                        if (result != -1) {
-                                            Log.d(TAG, "setNotify: Dodano powiadomienie dla " + tempEvent.getEventName() + " " + tempEventTime.toLocalDate().toString()
-                                                    + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
-                                        } else {
-                                            Log.d(TAG, "setNotify: Nie udało się dodać informacji o powiadomieniu");
-                                        }
+                                    if (!notificationCreated) {
+                                        Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla " + tempEvent.getEventName());
                                     }
                                 }
                             }
-
                         }
-                    } catch (Exception e) {
-                        Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla wydarzen z czasem innym niż domyślny " + e.getMessage());
-                        return;
                     }
+                } catch (Exception e) {
+                    Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla wydarzen z czasem innym niż domyślny " + e.getMessage());
+                    return;
                 }
             }
         } catch (Exception e) {
             Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia " + e.getMessage());
         }
-
 
         try {
             // build alarm for all events for current day they have set default time
@@ -175,36 +147,58 @@ public class SetAlarmService extends android.app.job.JobService {
                         tempNotification.getNotificationDateInMillis(),
                         tempNotification.getNotificationTimeInMillis());
                 if (notificationModelsList.size() == 0) {
-                    AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-                    Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
-                    notificationIntent.putExtra("NOTIFY_TEXT", eventsWithDefaultTime.toString());
-                    notificationIntent.putExtra("ID", -nextDayDate.getDayOfYear());
-                    notificationIntent.putExtra("MANY", forNextDayDefaultTime.size());
-
-                    PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
-                            -nextDayDate.getDayOfYear(),
-                            notificationIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
 
                     LocalTime eventTime = new LocalTime(settingsViewModel.getDefaultTime(), DateTimeZone.forID("UCT"));
 
-                    DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
-                            nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour())
-                            .withZoneRetainFields(DateTimeZone.forID(TimeZone.getDefault().getID()));
-
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
-                    long result = notificationViewModel.insertNotification(tempNotification);
-                    if (result != -1) {
-                        Log.d(TAG, "setNotify: Dodano powiadomienie dla " + eventsWithDefaultTime + " " + tempEventTime.toLocalDate().toString()
-                                + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
-                    } else {
-                        Log.d(TAG, "setNotify: Stworzono powiadomienie dla " + eventsWithDefaultTime + " o godzinie " + tempEventTime.toString());
+                    boolean notificationCreated = createNotification(eventsWithDefaultTime.toString(),
+                            -nextDayDate.getDayOfYear(),
+                            eventTime,
+                            forNextDayDefaultTime.size(),
+                            true);
+                    if (!notificationCreated) {
+                        Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla " + eventsWithDefaultTime.toString());
                     }
+
                 }
             }
         } catch (Exception e) {
             Log.d(TAG, "setNotify: Problem z stworzeniem powiadomienia dla wydarzen domyślnych " + e.getMessage());
+        }
+    }
+
+    private boolean createNotification(String notifyText, int notifyPendingIntentID, LocalTime eventTime, int numberOfEvents, boolean itsDefaultTimeNotification) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent notificationIntent = new Intent(getApplicationContext(), ReminderBroadcast.class);
+        notificationIntent.putExtra("NOTIFY_TEXT", notifyText);
+        notificationIntent.putExtra("ID", notifyPendingIntentID);
+        notificationIntent.putExtra("MANY", numberOfEvents);
+
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                notifyPendingIntentID,
+                notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        DateTime tempEventTime = new DateTime(nextDayDate.getYear(), nextDayDate.getMonthOfYear(),
+                nextDayDate.getDayOfMonth(), eventTime.getHourOfDay(), eventTime.getMinuteOfHour())
+                .withZoneRetainFields(DateTimeZone.forID(TimeZone.getDefault().getID()));
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, tempEventTime.getMillis(), alarmIntent);
+
+        if (!itsDefaultTimeNotification) {
+            PrzypominajkaDatabaseHelper.updateNotificationCreatedColumn(notifyText, true, nextDayDate);
+        }
+
+        Log.d(TAG, "setNotify: Stworzono powiadomienie dla " + notifyText + " o godzinie " + tempEventTime.toString());
+        NotificationModel newNotification = new NotificationModel(notifyText, notifyPendingIntentID,
+                new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()), tempEventTime.toLocalDate(), false);
+        long result = notificationViewModel.insertNotification(newNotification);
+        if (result != -1) {
+            Log.d(TAG, "setNotify: Dodano powiadomienie dla " + notifyText + " " + tempEventTime.toLocalDate().toString()
+                    + " " + new LocalTime(tempEventTime.getHourOfDay(), tempEventTime.getMinuteOfHour()).toString());
+            return true;
+        } else {
+            Log.d(TAG, "setNotify: Nie udało się dodać informacji o powiadomieniu");
+            return false;
         }
     }
 }
