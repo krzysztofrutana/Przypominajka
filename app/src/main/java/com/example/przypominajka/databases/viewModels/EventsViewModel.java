@@ -48,8 +48,11 @@ public class EventsViewModel extends AndroidViewModel {
         }
     }
 
+    // after delete event from events table, also must be deleted event table with days of event
     public int deleteEvent(EventModel event) {
-        return eventsRepository.deleteEvent(event);
+        int resultOfDeleteEvent = eventsRepository.deleteEvent(event);
+        PrzypominajkaDatabaseHelper.deleteEvent(event.getEventName());
+        return resultOfDeleteEvent;
     }
 
     public int getEventID(String eventName) {

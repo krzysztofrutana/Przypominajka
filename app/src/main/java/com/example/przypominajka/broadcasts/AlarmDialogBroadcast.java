@@ -1,5 +1,6 @@
 package com.example.przypominajka.broadcasts;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -26,15 +27,14 @@ public class AlarmDialogBroadcast extends BroadcastReceiver {
     final String ID = "notifyPrzypominajkaNotMadeEvents";
     final String channelName = "PrzypominajkaChannel";
 
-    private int notifyID;
-
-    private CheckNotDoneEvent moveNotDoneEvent = new CheckNotDoneEvent();
+    private final CheckNotDoneEvent moveNotDoneEvent = new CheckNotDoneEvent();
 
     private static final String TAG = "AlarmDialogBroadcast";
 
+    @SuppressLint("UnsafeProtectedBroadcastReceiver")
     @Override
     public void onReceive(Context context, Intent intent) {
-        notifyID = intent.getIntExtra("ID", 11000);
+        int notifyID = intent.getIntExtra("ID", 11000);
 
         Log.d(TAG, "onRecive: uruchomiono notifikacje");
         Intent intentMainActivity = new Intent(context, MainActivity.class);
