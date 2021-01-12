@@ -3,6 +3,7 @@ package com.example.przypominajka.databases;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.EventLog;
 import android.util.Log;
 
 import androidx.room.OnConflictStrategy;
@@ -80,7 +81,9 @@ public class PrzypominajkaDatabaseHelper {
             SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
             LocalDate newDate = startDate;
             LocalDate tempDate = new LocalDate(startDate.getYear(), startDate.getMonthOfYear(), dayOfMonth);
-            if (startDate.toDateTimeAtStartOfDay().getMillis() < tempDate.toDateTimeAtStartOfDay().getMillis()) {
+            int j = 0;
+            if ((startDate.toDateTimeAtStartOfDay().getMillis() <= tempDate.toDateTimeAtStartOfDay().getMillis() &&
+                    tempDate.toDateTimeAtStartOfDay().getMillis() > LocalDate.now().toDateTimeAtStartOfDay().getMillis())) {
                 long tempDateAsMillis = tempDate.toDateTimeAtStartOfDay().getMillis();
                 ContentValues contentValuesCurrentDate = new ContentValues();
                 contentValuesCurrentDate.put("DAY", tempDateAsMillis);
@@ -88,8 +91,9 @@ public class PrzypominajkaDatabaseHelper {
                 if (resultCurrentDate == -1) {
                     return false;
                 }
+                j = 1;
             }
-            for (int i = 0; i < monthNumberOfRepeats; i++) {
+            for (int i = j; i < monthNumberOfRepeats; i++) {
                 int day;
                 if (dayOfMonth == 31) {
                     LocalDate tempLocalDate = new LocalDate(newDate.getYear(), newDate.getMonthOfYear() + 1, 1);
@@ -124,7 +128,8 @@ public class PrzypominajkaDatabaseHelper {
 
     }
 
-    public static boolean fillTableJumpDay(String tableName, int timeInterval, LocalDate startDate,
+    public static boolean fillTableJumpDay(String tableName, int timeInterval, LocalDate
+            startDate,
                                            int shortTimeType, boolean shortTimeRepeatsAllTime,
                                            int shortTimeNumberOfRepeats, boolean itsEventTimeDefault, LocalTime eventTime) {
         try {
@@ -254,7 +259,8 @@ public class PrzypominajkaDatabaseHelper {
 
     //setting a value that informs whether the notification has been created
     @SuppressLint("LongLogTag")
-    public static void updateNotificationCreatedColumn(String eventName, boolean isCreated, LocalDate date) {
+    public static void updateNotificationCreatedColumn(String eventName,
+                                                       boolean isCreated, LocalDate date) {
         try {
             SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();
             eventName = eventName.replace(" ", "_");
@@ -312,7 +318,8 @@ public class PrzypominajkaDatabaseHelper {
     }
 
     @SuppressLint("LongLogTag")
-    public static List<LocalDate> checkNotDoneEventFromCurrentDay(String eventName, LocalDate date) {
+    public static List<LocalDate> checkNotDoneEventFromCurrentDay(String eventName, LocalDate
+            date) {
         try {
             List<LocalDate> findedDays = new ArrayList<>();
             SupportSQLiteDatabase sdb = PrzypominajkaDatabase.getDatabase(MyPrzypominajkaApp.get()).getOpenHelper().getWritableDatabase();

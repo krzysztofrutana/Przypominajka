@@ -839,7 +839,7 @@ public class AddNewEventActivity extends AppCompatActivity {
         }
 
         int timeInterval = Integer.parseInt(monthWhichDayField.getText().toString());
-        if (timeInterval != 0 && timeInterval < 31) {
+        if (timeInterval == 0 || timeInterval > 31) {
             showToastMessage("Nieporpawna liczba oznaczająca dzień miesiąca");
             runOnUiThread(() -> dialog.dismiss());
             return null;
@@ -990,9 +990,10 @@ public class AddNewEventActivity extends AppCompatActivity {
             return false;
         }
 
-        PrzypominajkaDatabaseHelper.updateNotificationCreatedColumn(eventNameField.getText().toString(),
-                true, eventTime.toLocalDate());
-
+        if (!itsOneTimeEvent) {
+            PrzypominajkaDatabaseHelper.updateNotificationCreatedColumn(eventNameField.getText().toString(),
+                    true, eventTime.toLocalDate());
+        }
         Log.d(TAG, "AddNewEvent: Stworzono powiadomienie dla " + eventNameField.getText().toString() + ", Data:  " + eventTime.toString());
 
         NotificationModel newNotification = new NotificationModel(

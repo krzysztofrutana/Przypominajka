@@ -235,6 +235,9 @@ public class CalendarFragment extends Fragment {
                             listViewLabel.setText("Lista zdarzeń na dziś:");
                             showEventList(LocalDate.now(), true);
                             linearLayout.setBackground(textBorder);
+                            if (previousClickedLinearLayout != null) {
+                                previousClickedLinearLayout.setBackground(new ColorDrawable(Color.TRANSPARENT)); // reset previous cell to transparent border
+                            }
                         } else {
                             if (previousClickedLinearLayout != null) {
                                 previousClickedLinearLayout.setBackground(new ColorDrawable(Color.TRANSPARENT)); // reset previous cell to transparent border
