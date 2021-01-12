@@ -57,11 +57,11 @@ The whole is displayed in the form of an original calendar with color markings o
 
 <p align="center">
   <a href="https://github.com/krzysztofrutana/OCR-Desktop">
-    <img src="https://i.ibb.co/KbNdZMr/Screenshot-1603464201.png" width="400">
-    <img src="https://i.ibb.co/QpYv20h/Screenshot-1603464758.png" width="400">
+    <img src="https://i.ibb.co/X5mdkfZ/today.png" width="400">
+    <img src="https://i.ibb.co/tB2hQWH/jutro.png" width="400">
   </a>
 
-The main window displays the author's calendar and a list of events for a specific day or by clicking on a date for a selected day. When you click on an event, detailed information about it is displayed.
+The main window displays the author's calendar and a list of events for a specific day or by clicking on a date for a selected day. When you click on an event, detailed information about it is displayed. In the events occurring on the current day, it should be indicated whether they were done. Otherwise, notifications about events not done will be created in the future.
 <br />
 <br />
 <br />
@@ -80,14 +80,14 @@ Navigation in the application is based on the slide-out menu on the left and the
 
 <p align="center">
   <a href="https://github.com/krzysztofrutana/OCR-Desktop">
-    <img src="https://i.ibb.co/wCtj1Zz/Screenshot-1603464324.png" width="400">
-    <img src="https://i.ibb.co/z5GtrtM/Screenshot-1603464335.png" width="400">
+    <img src="https://i.ibb.co/3s2xVTj/w-konkretne-dni-miesiaca.png" width="400">
+    <img src="https://i.ibb.co/r40mY1M/powtarzanie.png" width="400">
   </a>
   
  <p align="center">
   <a href="https://github.com/krzysztofrutana/OCR-Desktop">
-    <img src="https://i.ibb.co/Vw3SGCw/Screenshot-1603464327.png" width="400">
-    <img src="https://i.ibb.co/ZhCXfXv/Screenshot-1603455577.png" width="400">
+    <img src="https://i.ibb.co/zRbC4RC/jednroazowe.png" width="400">
+    <img src="https://i.ibb.co/JK3xWy6/przyklad.png" width="400">
   </a>
 
 
@@ -95,7 +95,7 @@ When adding a new event, it is required to enter its name and color (it is displ
 An event may be cyclical on a given day of the month for a given number of months (e.g. useful when paying bills). 
 It can also be cyclical every few days / weeks / months (to be agreed) and apply all the time or repeat only a specified number of times 
 (useful in the case of activities, e.g. performed every two days or e.g. taking medications). It is also possible to schedule a one-time event. 
-Finally, the start date of the event is given.
+Finally, the start date of the event is given. For each type of event, the time is also set, it can be default (changed in the settings) or selected by the user.
 
 <br />
 <br />
@@ -104,10 +104,10 @@ Finally, the start date of the event is given.
  <p align="center">
   <a href="https://github.com/krzysztofrutana/OCR-Desktop">
     <img src="https://i.ibb.co/sjjTbRm/Screenshot-1603464356.png" width="400">
-    <img src="https://i.ibb.co/8Mqsffp/Screenshot-1603464360.png" width="400">
+    <img src="https://i.ibb.co/Z8Dz1fS/szczego-y.png" width="400">
   </a>
   
-The window on the left allows you to view all saved events. After clicking on the selected event, it is possible to view its details and delete the selected event.
+The window on the left allows you to view all saved events. After clicking on the selected event, it is possible to view its details and delete the selected event. In detail window, you can also change the color of the event, time, move the next reminder to a different date or end the event (it will remain visible in the calendar view).
 
 <br />
 <br />
